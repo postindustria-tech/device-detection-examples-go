@@ -67,14 +67,14 @@ stages:
       - powershell: |
           ./dd/scripts/prebuild.ps1
         displayName: 'Build device detection core binaries'
-        workingDirectory: 'src/device-detection-go'
+        workingDirectory: '$(Build.SourcesDirectory)/../src/device-detection-go'
 
       # Run test
       - bash: |
           echo 'replace "github.com/51Degrees/device-detection-go" v0.0.0 => "./device-detection-go"' >> go.mod
           go test ./dd
         displayName: 'Run tests'
-        workingDirectory: 'src/device-detection-go-examples'
+        workingDirectory: '$(Build.SourcesDirectory)/../src/device-detection-go-examples'
         
       # Publish Test Results to Azure Pipelines/TFS
       #- task: PublishTestResults@2
