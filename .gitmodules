@@ -1,3 +1,6 @@
 [submodule "ci/common-ci"]
 	path = ci/common-ci
 	url = ../common-ci
+[submodule "device-detection-go"]
+	path = device-detection-go
+	url = ../device-detection-go
