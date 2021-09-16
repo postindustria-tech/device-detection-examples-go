@@ -23,6 +23,10 @@ import ( //	"runtime"
 // File to output the performance report
 const reportFile = "performance_report.log"
 
+// Number of iterations to perform over the User-Agents.
+// The higher the number is the more accurate the report.
+const iterationCount = 4
+
 // Report struct for each performance run
 type report struct {
 	uaCount        uint64
@@ -122,39 +126,42 @@ func performDetections(
 	uaFilePath string,
 	calibration bool,
 	rep *report) {
-	countUAFromFiles(uaFilePath, rep)
-	// Loop through the User-Agent file
-	file, err := os.OpenFile(uaFilePath, os.O_RDONLY, 0444)
-	if err != nil {
-		log.Fatal(err)
-	}
+	// Create a wait group
+	var wg sync.WaitGroup
 
-	// Make sure to close the file
-	defer func() {
-		if err := file.Close(); err != nil {
+	countUAFromFiles(uaFilePath, rep)
+	rep.uaCount *= iterationCount
+
+	for i := 0; i < 4; i++ {
+		// Loop through the User-Agent file
+		file, err := os.OpenFile(uaFilePath, os.O_RDONLY, 0444)
+		if err != nil {
 			log.Fatal(err)
 		}
-	}()
 
-	// Actual processing
-	scanner := bufio.NewScanner(file)
-	defer func() {
+		// Actual processing
+		scanner := bufio.NewScanner(file)
+
+		for scanner.Scan() {
+			// Increase wait group
+			wg.Add(1)
+			go matchUserAgent(
+				&wg,
+				manager,
+				scanner.Text(),
+				calibration,
+				rep)
+		}
+
+		// Make sure there is no scanner error
 		if err := scanner.Err(); err != nil {
 			log.Fatal(err)
 		}
-	}()
 
-	// Create a wait group
-	var wg sync.WaitGroup
-	for scanner.Scan() {
-		// Increase wait group
-		wg.Add(1)
-		go matchUserAgent(
-			&wg,
-			manager,
-			scanner.Text(),
-			calibration,
-			rep)
+		// Make sure the file is closed properly
+		if err := file.Close(); err != nil {
+			log.Fatal(err)
+		}
 	}
 	// Wait until all goroutines finish
 	wg.Wait()
