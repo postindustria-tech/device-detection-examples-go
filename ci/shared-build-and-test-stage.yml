@@ -3,6 +3,9 @@ parameters:
 - name: runTests
   type: string
   default: 'On'
+- name: goVersion
+  type: string
+  default: '1.17'
 
 stages:
 - stage: Linux
@@ -45,6 +48,12 @@ stages:
         displayName: 'Build device detection core binaries'
         workingDirectory: '$(Build.SourcesDirectory)/device-detection-go'
 
+      # Install go
+      - task: GoTool@0
+        displayName: 'Use go ${{ parameters.goVersion }}'
+        inputs:
+          version: '${{ parameters.goVersion }}'
+
       # Run test
       - task: Go@0
         displayName: 'Run tests'
@@ -79,6 +88,12 @@ stages:
         submodules: recursive
         lfs: true
         persistCredentials: true
+
+      # Install go
+      - task: GoTool@0
+        displayName: 'Use go ${{ parameters.goVersion }}'
+        inputs:
+          version: '${{ parameters.goVersion }}'
 
       # Run prebuild
       - powershell: |
