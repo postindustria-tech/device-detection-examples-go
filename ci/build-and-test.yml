@@ -22,12 +22,10 @@ resources:
 stages:
 - template: shared-build-and-test-stage.yml
   parameters:
-    macImage: $(macImage)
-    windowsImage: $(windowsImage)
     runTests: variables['RunTests']
 
 # Try to complete the corresponding pull request if
 # this is triggered by one.    
 - template: shared-auto-complete-pr-stage.yml@ciTemplates
   parameters:
-    stageDependencies: [Linux]
+    stageDependencies: [Linux,MacOS]
