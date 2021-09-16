@@ -23,7 +23,7 @@ func match(
 	}
 
 	// Get the values in string
-	value, _, err := results.GetValuesString(
+	value, _, err := results.ValuesString(
 		"IsMobile",
 		100,
 		",")

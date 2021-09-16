@@ -70,7 +70,7 @@ func matchUserAgent(
 		}
 
 		// Get the value in string
-		value, _, err := results.GetValuesString(
+		value, _, err := results.ValuesString(
 			"IsMobile",
 			100,
 			",")
