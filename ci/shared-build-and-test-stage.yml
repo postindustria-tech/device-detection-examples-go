@@ -51,7 +51,7 @@ stages:
         inputs:
           command: test
           arguments: -args force
-        workingDirectory: '$(Build.SourcesDirectory)/dd'
+          workingDirectory: '$(Build.SourcesDirectory)/dd'
 
 stages:
 - stage: MacOS
@@ -93,4 +93,4 @@ stages:
         inputs:
           command: test
           arguments: -args force
-        workingDirectory: '$(Build.SourcesDirectory)/dd'
+          workingDirectory: '$(Build.SourcesDirectory)/dd'
