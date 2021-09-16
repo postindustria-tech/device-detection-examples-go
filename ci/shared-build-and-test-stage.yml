@@ -53,7 +53,6 @@ stages:
           arguments: -args force
           workingDirectory: '$(Build.SourcesDirectory)/dd'
 
-stages:
 - stage: MacOS
   dependsOn: []
 
