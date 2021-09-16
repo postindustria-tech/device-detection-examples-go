@@ -260,9 +260,9 @@ func runPerformanceExample(
 
 func Example_Performance() {
 	// Data file path
-	dataFilePath := "../../device-detection-go/dd/device-detection-cxx/device-detection-data/51Degrees-LiteV4.1.hash"
+	dataFilePath := "../device-detection-go/dd/device-detection-cxx/device-detection-data/51Degrees-LiteV4.1.hash"
 	// User-Agents file path
-	uaFilePath := "../../device-detection-go/dd/device-detection-cxx/device-detection-data/20000 User Agents.csv"
+	uaFilePath := "../device-detection-go/dd/device-detection-cxx/device-detection-data/20000 User Agents.csv"
 
 	runPerformanceExample(dataFilePath, uaFilePath, dd.Balanced)
 	// Output:
