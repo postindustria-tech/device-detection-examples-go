@@ -6,7 +6,9 @@ This example illustrates the performance 51Degrees device detection solution.
 
 import ( //	"runtime"
 	"bufio"
+	"errors"
 	"fmt"
+	"io/fs"
 	"log"
 	"os"
 	"runtime"
@@ -18,8 +20,10 @@ import ( //	"runtime"
 	"github.com/51Degrees/device-detection-go/dd"
 )
 
-const progressMarks = 40
+// File to output the performance report
+const reportFile = "performance_report.log"
 
+// Report struct for each performance run
 type report struct {
 	uaCount        uint64
 	uaIsMobile     uint64
@@ -27,27 +31,7 @@ type report struct {
 	processingTime int64
 }
 
-// TODO: This does not work nicely in multi threads environment
-// Don't print load bar for now as it needs to be done by one
-// thread which cannot be determined how often the work is allocated for
-// that thread within golang concurrency model.
-/*
-func printLoadBar(r *report) {
-	processed := r.uaProcessed
-	progress := r.uaCount / progressMarks
-	full := processed / progress
-	empty := r.uaCount/progress - full
-	fmt.Printf("\r[")
-	for i := uint64(0); i < full; i++ {
-		fmt.Printf("=")
-	}
-	for i := uint64(0); i < empty; i++ {
-		fmt.Printf(" ")
-	}
-	fmt.Printf("]")
-}
-*/
-
+// Perform device detection on a User-Agent
 func matchUserAgent(
 	wg *sync.WaitGroup,
 	manager *dd.ResourceManager,
@@ -100,6 +84,8 @@ func matchUserAgent(
 	defer wg.Done()
 }
 
+// Count the number of User-Agents in a User-Agents file and update
+// a report statistic
 func countUAFromFiles(
 	uaFilePath string,
 	rep *report) {
@@ -128,7 +114,10 @@ func countUAFromFiles(
 	}
 }
 
-func runTests(
+// Run the performance test. Determine the number of records in a User-Agent
+// file. Iterate through the User-Agent file and perform detection on each
+// User-Agent. Record the processing time and update a report statistic.
+func performDetections(
 	manager *dd.ResourceManager,
 	uaFilePath string,
 	calibration bool,
@@ -171,59 +160,92 @@ func runTests(
 	wg.Wait()
 }
 
-func printReport(r *report) {
-	fmt.Printf("\n")
-	fmt.Printf("Total User-Agents: %d\n", r.uaCount)
-	fmt.Printf("IsMobile User-Agents: %d\n", r.uaIsMobile)
-	fmt.Printf("Processed User-Agents: %d\n", r.uaProcessed)
-	fmt.Printf("Processing time: %d ms\n", r.processingTime)
+// Check a error returned from writing to a buffer
+func checkWriteError(err error) {
+	if err != nil {
+		log.Fatal("ERROR: Failed to write to buffer.")
+	}
 }
 
+// Print report to a report file
+func printReport(caliR *report, actR *report) {
+	// Check if a report file already exists
+	if _, err := os.Stat(reportFile); err == nil || errors.Is(err, fs.ErrExist) {
+		// If no 'force' option is specified then terminate.
+		if !strings.EqualFold(os.Args[len(os.Args)-1], "force") {
+			log.Fatalf("ERROR: A report file \"%s\" already exists.", reportFile)
+		}
+	}
+
+	// Create a report file
+	f, err := os.Create(reportFile)
+	if err != nil {
+		log.Fatalf("ERROR: Failed to create report file \"%s\".", reportFile)
+	}
+	defer f.Close()
+
+	// Create a writer
+	w := bufio.NewWriter(f)
+
+	// Make sure calibration and actual detections were performed on the same
+	// number of user agents.
+	if actR.uaCount != caliR.uaCount {
+		log.Fatal("ERROR: Calibration and actual detections were not" +
+			"performed on the same number of User-Agents.")
+	}
+
+	// Calculate actual performance
+	avg := float64(actR.processingTime-caliR.processingTime) /
+		float64(actR.uaCount)
+	_, err = fmt.Fprintf(w, "Average %.5f ms per User-Agent\n", avg)
+	checkWriteError(err)
+	_, err = fmt.Fprintf(w, "Total User-Agents: %d\n", actR.uaCount)
+	checkWriteError(err)
+	_, err = fmt.Fprintf(w, "IsMobile User-Agents: %d\n", actR.uaIsMobile)
+	checkWriteError(err)
+	_, err = fmt.Fprintf(w, "Processed User-Agents: %d\n", actR.uaProcessed)
+	checkWriteError(err)
+	_, err = fmt.Fprintf(w, "Number of CPUs: %d\n", runtime.NumCPU())
+	checkWriteError(err)
+	w.Flush()
+}
+
+// Run the performance example. Performs two phase: calibration and actual
+// detection. Processing time of each phase is recorded to produce the actual
+// processing time per detection
 func run(
 	manager *dd.ResourceManager,
 	uaFilePath string) {
 	// Calibration
-	fmt.Println("\nCalibrating...")
 	caliReport := report{0, 0, 0, 0}
 	start := time.Now()
-	runTests(manager, uaFilePath, true, &caliReport)
+	performDetections(manager, uaFilePath, true, &caliReport)
 	end := time.Now()
 	caliTime := end.Sub(start)
 	caliReport.processingTime = caliTime.Milliseconds()
-	printReport(&caliReport)
 	// Validation to make sure same number of UAs have been read and processed
 	if caliReport.uaCount != caliReport.uaProcessed {
 		log.Fatal("ERROR: Not all User-Agents have been processed.")
 	}
 
 	// Action
-	fmt.Println("\nRunning performance tests...")
 	actReport := report{0, 0, 0, 0}
 	start = time.Now()
-	runTests(manager, uaFilePath, false, &actReport)
+	performDetections(manager, uaFilePath, false, &actReport)
 	end = time.Now()
 	actTime := end.Sub(start)
 	actReport.processingTime = actTime.Milliseconds()
-	printReport(&actReport)
 	// Validation to make sure same number of UAs have been read and processed
 	if actReport.uaCount != actReport.uaProcessed {
 		log.Fatal("ERROR: Not all User-Agents have been processed.")
 	}
 
-	// Make sure calibration and actual detections were performed on the same
-	// number of user agents.
-	if actReport.uaCount != caliReport.uaCount {
-		log.Fatal("ERROR: Calibration and actual detections were not" +
-			"performed on the same number of User-Agents")
-	}
-
-	// Calculate actual performance
-	avg := float64(
-		actTime.Milliseconds()-caliTime.Milliseconds()) /
-		float64(actReport.uaCount)
-	fmt.Printf("Average %.4f ms per User-Agent\n", avg)
+	// Print the final performance report
+	printReport(&caliReport, &actReport)
 }
 
+// Setup all configuration settings required for running this example.
+// Run the example.
 func runPerformanceExample(
 	dataFilePath string,
 	uaFilePath string,
@@ -265,6 +287,16 @@ func Example_Performance() {
 	uaFilePath := "../device-detection-go/dd/device-detection-cxx/device-detection-data/20000 User Agents.csv"
 
 	runPerformanceExample(dataFilePath, uaFilePath, dd.Balanced)
+	fmt.Printf("FINISHED")
+
+	// The performance is output to a file 'performance_report.log' with content
+	// similar as below:
+	//   Average 0.01510 ms per User-Agent
+	//   Total User-Agents: 20000
+	//   IsMobile User-Agents: 14527
+	//   Processed User-Agents: 20000
+	//   Number of CPUs: 2
+
 	// Output:
-	// .*
+	// FINISHED
 }
