@@ -23,7 +23,8 @@ func processUserAgent(
 	// Perform detection
 	err := results.MatchUserAgent(ua)
 	if err != nil {
-		panic(err)
+		log.Fatalf(
+			"ERROR: Failed to perform detection on User-Agent \"%s\".\n", ua)
 	}
 }
 
@@ -42,35 +43,35 @@ func process(
 		1,
 		0)
 	if err != nil {
-		log.Fatal("ERROR: Failed to create new results hash object.")
+		log.Fatalln("ERROR: Failed to create new results hash object.")
 	}
 
 	// Make sure results object is freed after function execution.
 	defer func() {
 		err = results.Free()
 		if err != nil {
-			log.Fatal("ERROR: Ftailed to free results hash object.")
+			log.Fatalln("ERROR: Ftailed to free results hash object.")
 		}
 	}()
 
 	// Open the User-Agents file for processing
 	uaFile, err := os.OpenFile(uaFilePath, os.O_RDONLY, 0444)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("ERROR: Failed to open file \"%s\".\n", uaFilePath)
 	}
 
 	// Create a scanner to read User-Agents
 	scanner := bufio.NewScanner(uaFile)
 	defer func() {
 		if err := scanner.Err(); err != nil {
-			log.Fatal(err)
+			log.Fatalf("ERROR: Failed during scanning file \"%s\".\n", uaFilePath)
 		}
 	}()
 
 	w := io.Writer(outFile)
 	available, err := results.AvailableProperties()
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalln("ERROR: Failed to obtain available properties.")
 	}
 
 	// Print header to output file
@@ -131,14 +132,14 @@ func Example_offline_processing() {
 		"IsMobile,BrowserName,DeviceType,PriceBand,ReleaseMonth,ReleaseYear",
 		filePath)
 	if err != nil {
-		panic(err)
+		log.Fatalln("ERROR: Failed to initialize resource manager.")
 	}
 
 	// Make sure manager object will be freed after the function execution
 	defer func() {
 		err := manager.Free()
 		if err != nil {
-			panic(err)
+			log.Fatalln("ERROR: Failed to free resource manager.")
 		}
 	}()
 

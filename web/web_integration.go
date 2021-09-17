@@ -27,7 +27,7 @@ var templ1 = `<!DOCTYPE HTML>
 <html>
   <head>
     <meta charset="utf-8">
-	<title>Web Integration Example</title>
+    <title>Web Integration Example</title>
   </head>
   <body>
     <p id=browsername>Browser: <b>{{.BrowserName}}</b></p>
@@ -43,7 +43,7 @@ func match(
 	// Perform detection
 	err := results.MatchUserAgent(ua)
 	if err != nil {
-		panic(err)
+		log.Fatalf("ERROR: Failed to perform detection on User-Agent \"%s\".\n", ua)
 	}
 }
 
@@ -57,7 +57,7 @@ func getValue(
 		100,
 		",")
 	if err != nil {
-		panic(err)
+		log.Fatalln("ERROR: Failed to get results values string.")
 	}
 
 	index, err := results.RequiredPropertyIndexFromName(propertyName)
@@ -89,14 +89,14 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		1,
 		0)
 	if err != nil {
-		panic(err)
+		log.Fatalln("ERROR: Failed to create new results.")
 	}
 
 	// Make sure results object is freed after function execution.
 	defer func() {
 		err = results.Free()
 		if err != nil {
-			panic(err)
+			log.Fatalln("ERROR: Failed to free results.")
 		}
 	}()
 
@@ -126,14 +126,14 @@ func main() {
 		"",
 		filePath)
 	if err != nil {
-		panic(err)
+		log.Fatalln("ERROR: Failed to initialize resource manager.")
 	}
 
 	// Make sure manager object will be freed after the function execution
 	defer func() {
 		err := manager.Free()
 		if err != nil {
-			panic(err)
+			log.Fatalln("ERROR: Failed to free resource manager.")
 		}
 	}()
 

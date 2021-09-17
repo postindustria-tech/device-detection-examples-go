@@ -7,6 +7,7 @@ User-Agent strings.
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/51Degrees/device-detection-go/dd"
 )
@@ -19,16 +20,35 @@ func match(
 	// Perform detection
 	err := results.MatchUserAgent(ua)
 	if err != nil {
-		panic(err)
+		log.Fatalln("ERROR: Failed to perform detection on a User-Agent.")
 	}
+
+	propertyName := "IsMobile"
 
 	// Get the values in string
 	value, _, err := results.ValuesString(
-		"IsMobile",
+		propertyName,
 		100,
 		",")
 	if err != nil {
-		panic(err)
+		log.Fatalln("ERROR: Failed to get results values")
+	}
+
+	index, err := results.RequiredPropertyIndexFromName(propertyName)
+	if err != nil {
+		log.Fatalf(
+			"ERROR: Failed to get property index from a name for %s.\n",
+			propertyName)
+	}
+	hasValues, err := results.HasValues(index)
+	if err != nil {
+		log.Fatalf(
+			"ERROR: Failed to check if a matched value exists for property "+
+				"index %d.\n", index)
+	}
+
+	if !hasValues {
+		log.Printf("Property %s does not have a matched value.\n", propertyName)
 	}
 
 	fmt.Printf("\tIsMobile: %s\n", value)
@@ -45,14 +65,14 @@ func Example_getting_started() {
 		"",
 		filePath)
 	if err != nil {
-		panic(err)
+		log.Fatalln("ERROR: Failed to initialize resource manager.")
 	}
 
 	// Make sure manager object will be freed after the function execution
 	defer func() {
 		err := manager.Free()
 		if err != nil {
-			panic(err)
+			log.Fatalln("ERROR: Failed to free resource manager.")
 		}
 	}()
 
@@ -62,14 +82,14 @@ func Example_getting_started() {
 		1,
 		0)
 	if err != nil {
-		panic(err)
+		log.Fatalln("ERROR: Failed to create a new results.")
 	}
 
 	// Make sure results object is freed after function execution.
 	defer func() {
 		err = results.Free()
 		if err != nil {
-			panic(err)
+			log.Fatalln("ERROR: Failed to free results.")
 		}
 	}()
 
