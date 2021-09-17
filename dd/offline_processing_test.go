@@ -143,7 +143,8 @@ func Example_offline_processing() {
 	}()
 
 	process(manager, uaFilePath, outputFilePath)
+	fmt.Printf("FINISHED")
 
 	// Output:
-	// *
+	// FINISHED
 }
