@@ -51,14 +51,14 @@ func matchUserAgent(
 			1,
 			0)
 		if err != nil {
-			log.Fatal(err)
+			log.Fatalln("ERROR: Failed to create new results.")
 		}
 
 		// Make sure results object is freed after function execution.
 		defer func() {
 			err = results.Free()
 			if err != nil {
-				panic(err)
+				log.Fatalln("ERROR: Failed to free results.")
 			}
 		}()
 
@@ -66,7 +66,8 @@ func matchUserAgent(
 		// Perform detection
 		err = results.MatchUserAgent(ua)
 		if err != nil {
-			log.Fatal(err)
+			log.Fatalf(
+				"ERROR: Failed to perform detection on User-Agent \"%s\".\n", ua)
 		}
 
 		// Get the value in string
@@ -75,7 +76,7 @@ func matchUserAgent(
 			100,
 			",")
 		if err != nil {
-			log.Fatal(err)
+			log.Fatalln("ERROR: Failed to get resuts values string.")
 		}
 
 		// Update report
@@ -96,11 +97,11 @@ func countUAFromFiles(
 	// Count the number of User Agents
 	f, err := os.OpenFile(uaFilePath, os.O_RDONLY, 0444)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("ERROR: Failed to open file \"%s\".\n", uaFilePath)
 	}
 	defer func() {
 		if err := f.Close(); err != nil {
-			log.Fatal(err)
+			log.Fatalf("ERROR: Failed to close file \"%s\".\n", uaFilePath)
 		}
 	}()
 
@@ -108,7 +109,7 @@ func countUAFromFiles(
 	s := bufio.NewScanner(f)
 	defer func() {
 		if err := s.Err(); err != nil {
-			log.Fatal(err)
+			log.Fatalf("ERROR: Error during scanning file\"%s\".\n", uaFilePath)
 		}
 	}()
 
@@ -136,7 +137,7 @@ func performDetections(
 		// Loop through the User-Agent file
 		file, err := os.OpenFile(uaFilePath, os.O_RDONLY, 0444)
 		if err != nil {
-			log.Fatal(err)
+			log.Fatalf("ERROR: Failed to open file \"%s\".\n", uaFilePath)
 		}
 
 		// Actual processing
@@ -155,12 +156,12 @@ func performDetections(
 
 		// Make sure there is no scanner error
 		if err := scanner.Err(); err != nil {
-			log.Fatal(err)
+			log.Fatalf("ERROR: Error during scanning file \"%s\".\n", uaFilePath)
 		}
 
 		// Make sure the file is closed properly
 		if err := file.Close(); err != nil {
-			log.Fatal(err)
+			log.Fatalf("ERROR: Failed to close file \"%s\".\n", uaFilePath)
 		}
 	}
 	// Wait until all goroutines finish
@@ -170,7 +171,7 @@ func performDetections(
 // Check a error returned from writing to a buffer
 func checkWriteError(err error) {
 	if err != nil {
-		log.Fatal("ERROR: Failed to write to buffer.")
+		log.Fatalln("ERROR: Failed to write to buffer.")
 	}
 }
 
@@ -232,7 +233,7 @@ func run(
 	caliReport.processingTime = caliTime.Milliseconds()
 	// Validation to make sure same number of UAs have been read and processed
 	if caliReport.uaCount != caliReport.uaProcessed {
-		log.Fatal("ERROR: Not all User-Agents have been processed.")
+		log.Fatalln("ERROR: Not all User-Agents have been processed.")
 	}
 
 	// Action
@@ -244,7 +245,7 @@ func run(
 	actReport.processingTime = actTime.Milliseconds()
 	// Validation to make sure same number of UAs have been read and processed
 	if actReport.uaCount != actReport.uaProcessed {
-		log.Fatal("ERROR: Not all User-Agents have been processed.")
+		log.Fatalln("ERROR: Not all User-Agents have been processed.")
 	}
 
 	// Print the final performance report
@@ -272,14 +273,14 @@ func runPerformanceExample(
 		"IsMobile",
 		dataFilePath)
 	if err != nil {
-		panic(err)
+		log.Fatalln("ERROR: Failed to initialize resource manager.")
 	}
 
 	// Make sure manager object will be freed after the function execution
 	defer func() {
 		err := manager.Free()
 		if err != nil {
-			panic(err)
+			log.Fatalln("ERROR: Failed to free resource manager.")
 		}
 	}()
 
