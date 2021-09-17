@@ -287,7 +287,7 @@ func runPerformanceExample(
 	run(manager, uaFilePath)
 }
 
-func Example_Performance() {
+func Example_performance() {
 	// Data file path
 	dataFilePath := "../device-detection-go/dd/device-detection-cxx/device-detection-data/51Degrees-LiteV4.1.hash"
 	// User-Agents file path

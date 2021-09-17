@@ -34,7 +34,7 @@ func match(
 	fmt.Printf("\tIsMobile: %s\n", value)
 }
 
-func Example() {
+func Example_getting_started() {
 	// Initialise manager
 	manager := dd.NewResourceManager()
 	config := dd.NewConfigHash()
