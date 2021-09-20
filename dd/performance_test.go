@@ -260,16 +260,15 @@ func runPerformanceExample(
 	perf dd.PerformanceProfile) {
 	// Create Resource Manager
 	manager := dd.NewResourceManager()
-	config := dd.NewConfigHash()
-	config.SetPerformanceProfile(perf)
+	config := dd.NewConfigHash(dd.InMemory)
 	config.SetConcurrency(uint16(runtime.NumCPU()))
 	config.SetUsePredictiveGraph(false)
-	config.SetUsePredictiveGraph(true)
+	config.SetUsePerformanceGraph(true)
 	config.SetUseUpperPrefixHeaders(false)
 	config.SetUpdateMatchedUserAgent(false)
 	err := dd.InitManagerFromFile(
 		manager,
-		config,
+		*config,
 		"IsMobile",
 		dataFilePath)
 	if err != nil {

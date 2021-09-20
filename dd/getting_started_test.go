@@ -57,11 +57,11 @@ func match(
 func Example_getting_started() {
 	// Initialise manager
 	manager := dd.NewResourceManager()
-	config := dd.NewConfigHash()
+	config := dd.NewConfigHash(dd.Balanced)
 	filePath := "../device-detection-go/dd/device-detection-cxx/device-detection-data/51Degrees-LiteV4.1.hash"
 	err := dd.InitManagerFromFile(
 		manager,
-		config,
+		*config,
 		"",
 		filePath)
 	if err != nil {

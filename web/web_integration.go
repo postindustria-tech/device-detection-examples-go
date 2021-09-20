@@ -20,7 +20,7 @@ type Page struct {
 }
 
 var manager *dd.ResourceManager
-var config dd.ConfigHash
+var config *dd.ConfigHash
 
 // Template for the response HTML page.
 var templ1 = `<!DOCTYPE HTML>
@@ -118,11 +118,11 @@ func handler(w http.ResponseWriter, r *http.Request) {
 func main() {
 	// Initialise manager
 	manager = dd.NewResourceManager()
-	config = dd.NewConfigHash()
+	config = dd.NewConfigHash(dd.Balanced)
 	filePath := "../device-detection-go/dd/device-detection-cxx/device-detection-data/51Degrees-LiteV4.1.hash"
 	err := dd.InitManagerFromFile(
 		manager,
-		config,
+		*config,
 		"",
 		filePath)
 	if err != nil {
