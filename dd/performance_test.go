@@ -133,7 +133,7 @@ func performDetections(
 	countUAFromFiles(uaFilePath, rep)
 	rep.uaCount *= iterationCount
 
-	for i := 0; i < 4; i++ {
+	for i := 0; i < iterationCount; i++ {
 		// Loop through the User-Agent file
 		file, err := os.OpenFile(uaFilePath, os.O_RDONLY, 0444)
 		if err != nil {
