@@ -18,7 +18,7 @@ import (
 // function match performs a match on an input User-Agent string and determine
 // if the device is a mobile device.
 func processUserAgent(
-	results dd.ResultsHash,
+	results *dd.ResultsHash,
 	ua string) {
 	// Perform detection
 	err := results.MatchUserAgent(ua)
@@ -93,7 +93,7 @@ func process(
 			results.IterationsByIndex(0))
 		// Get the values in string
 		for i := 0; i < len(available); i++ {
-			hasValues, err := results.HasValues(i)
+			hasValues, err := results.HasValuesByIndex(i)
 			if err != nil {
 				log.Fatal("ERROR: Failed to get 'HasValues'.")
 			}

@@ -38,7 +38,7 @@ var templ1 = `<!DOCTYPE HTML>
 // function match performs a match on an input User-Agent string and determine
 // if the device is a mobile device.
 func match(
-	results dd.ResultsHash,
+	results *dd.ResultsHash,
 	ua string) {
 	// Perform detection
 	err := results.MatchUserAgent(ua)
@@ -49,7 +49,7 @@ func match(
 
 // function getValue return a value results for a property
 func getValue(
-	results dd.ResultsHash,
+	results *dd.ResultsHash,
 	propertyName string) string {
 	// Get the values in string
 	value, _, err := results.ValuesString(
@@ -60,17 +60,11 @@ func getValue(
 		log.Fatalln("ERROR: Failed to get results values string.")
 	}
 
-	index, err := results.RequiredPropertyIndexFromName(propertyName)
-	if err != nil {
-		log.Fatalf(
-			"ERROR: Failed to get property index from a name for %s.\n",
-			propertyName)
-	}
-	hasValues, err := results.HasValues(index)
+	hasValues, err := results.HasValues(propertyName)
 	if err != nil {
 		log.Fatalf(
 			"ERROR: Failed to check if a matched value exists for property "+
-				"index %d.\n", index)
+				"%s.\n", propertyName)
 	}
 
 	if !hasValues {

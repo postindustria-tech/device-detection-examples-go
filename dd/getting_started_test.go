@@ -15,7 +15,7 @@ import (
 // function match performs a match on an input User-Agent string and determine
 // if the device is a mobile device.
 func match(
-	results dd.ResultsHash,
+	results *dd.ResultsHash,
 	ua string) {
 	// Perform detection
 	err := results.MatchUserAgent(ua)
@@ -34,17 +34,11 @@ func match(
 		log.Fatalln("ERROR: Failed to get results values")
 	}
 
-	index, err := results.RequiredPropertyIndexFromName(propertyName)
-	if err != nil {
-		log.Fatalf(
-			"ERROR: Failed to get property index from a name for %s.\n",
-			propertyName)
-	}
-	hasValues, err := results.HasValues(index)
+	hasValues, err := results.HasValues(propertyName)
 	if err != nil {
 		log.Fatalf(
 			"ERROR: Failed to check if a matched value exists for property "+
-				"index %d.\n", index)
+				"%s.\n", propertyName)
 	}
 
 	if !hasValues {
