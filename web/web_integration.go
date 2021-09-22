@@ -23,7 +23,7 @@ var manager *dd.ResourceManager
 var config *dd.ConfigHash
 
 // Template for the response HTML page.
-var templ1 = `<!DOCTYPE HTML>
+var templ = `<!DOCTYPE HTML>
 <html>
   <head>
     <meta charset="utf-8">
@@ -104,7 +104,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Construct the template
-	t := template.Must(template.New("dd").Parse(templ1))
+	t := template.Must(template.New("dd").Parse(templ))
 	// Return the constructed template in a response
 	t.Execute(w, p)
 }
