@@ -7,7 +7,6 @@ User-Agent strings.
 
 import (
 	"fmt"
-	"io/fs"
 	"log"
 	"os"
 	"strings"
@@ -29,16 +28,9 @@ func getFilePath(names []string) string {
 		"../device-detection-go",
 		names,
 	)
-	if err != nil && err != fs.ErrExist {
-		fileList := ""
-		for _, file := range names {
-			if fileList != "" {
-				fileList += ", "
-			}
-			fileList += file
-		}
+	if err != nil {
 		log.Fatalf("Could not find any file that matches any of \"%s\".\n",
-			fileList)
+			strings.Join(names, ", "))
 	}
 	return filePath
 }
