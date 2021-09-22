@@ -42,10 +42,7 @@ func TestMain(m *testing.M) {
 	code := m.Run()
 
 	// Make sure manager object will be freed after the function execution
-	err = manager.Free()
-	if err != nil {
-		log.Fatalln("ERROR: Failed to free resource manager.")
-	}
+	manager.Free()
 	os.Exit(code)
 }
 

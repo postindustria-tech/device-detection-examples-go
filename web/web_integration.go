@@ -78,21 +78,10 @@ func getValue(
 // Handler for web request
 func handler(w http.ResponseWriter, r *http.Request) {
 	// Create results
-	results, err := dd.NewResultsHash(
-		manager,
-		1,
-		0)
-	if err != nil {
-		log.Fatalln("ERROR: Failed to create new results.")
-	}
+	results := dd.NewResultsHash(manager, 1, 0)
 
 	// Make sure results object is freed after function execution.
-	defer func() {
-		err = results.Free()
-		if err != nil {
-			log.Fatalln("ERROR: Failed to free results.")
-		}
-	}()
+	defer results.Free()
 
 	// Perform detection on mobile User-Agent
 	match(results, r.UserAgent())
@@ -124,12 +113,7 @@ func main() {
 	}
 
 	// Make sure manager object will be freed after the function execution
-	defer func() {
-		err := manager.Free()
-		if err != nil {
-			log.Fatalln("ERROR: Failed to free resource manager.")
-		}
-	}()
+	defer manager.Free()
 
 	http.HandleFunc("/", handler)
 	log.Fatal(http.ListenAndServe("localhost:8000", nil))

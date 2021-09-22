@@ -39,21 +39,10 @@ func process(
 	}
 
 	// Create results
-	results, err := dd.NewResultsHash(
-		manager,
-		1,
-		0)
-	if err != nil {
-		log.Fatalln("ERROR: Failed to create new results hash object.")
-	}
+	results := dd.NewResultsHash(manager, 1, 0)
 
 	// Make sure results object is freed after function execution.
-	defer func() {
-		err = results.Free()
-		if err != nil {
-			log.Fatalln("ERROR: Ftailed to free results hash object.")
-		}
-	}()
+	defer results.Free()
 
 	// Open the User-Agents file for processing
 	uaFile, err := os.OpenFile(uaFilePath, os.O_RDONLY, 0444)
@@ -70,10 +59,7 @@ func process(
 	}()
 
 	w := io.Writer(outFile)
-	available, err := results.AvailableProperties()
-	if err != nil {
-		log.Fatalln("ERROR: Failed to obtain available properties.")
-	}
+	available := results.AvailableProperties()
 
 	// Print header to output file
 	fmt.Fprintf(w, "\"User-Agent\",\"Drift\",\"Difference\",\"Iterations\"")
@@ -149,12 +135,7 @@ func runOfflineProcessing(perf dd.PerformanceProfile) string {
 	}
 
 	// Make sure manager object will be freed after the function execution
-	defer func() {
-		err := manager.Free()
-		if err != nil {
-			log.Fatalln("ERROR: Failed to free resource manager.")
-		}
-	}()
+	defer manager.Free()
 
 	process(manager, uaFilePath, outputFilePath)
 	return fmt.Sprintf("Output to \"%s\".\n", relOutputFilePath)

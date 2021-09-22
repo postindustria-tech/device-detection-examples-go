@@ -45,29 +45,14 @@ func matchUserAgent(
 	atomic.AddUint64(&rep.uaProcessed, 1)
 	if !calibration {
 		// Create results
-		results, err := dd.NewResultsHash(
-			manager,
-			1,
-			0)
-		if err != nil {
-			log.Fatalln("ERROR: Failed to create new results.")
-		}
+		results := dd.NewResultsHash(manager, 1, 0)
 
 		// Make sure results object is freed after function execution.
-		defer func() {
-			err = results.Free()
-			if err != nil {
-				log.Fatalln("ERROR: Failed to free results.")
-			}
-		}()
+		defer results.Free()
 
 		// fmt.Println(ua)
 		// Perform detection
-		err = results.MatchUserAgent(ua)
-		if err != nil {
-			log.Fatalf(
-				"ERROR: Failed to perform detection on User-Agent \"%s\".\n", ua)
-		}
+		results.MatchUserAgent(ua)
 
 		// Get the value in string
 		value, _, err := results.ValuesString(
@@ -280,12 +265,7 @@ func runPerformance(perf dd.PerformanceProfile) string {
 	}
 
 	// Make sure manager object will be freed after the function execution
-	defer func() {
-		err := manager.Free()
-		if err != nil {
-			log.Fatalln("ERROR: Failed to free resource manager.")
-		}
-	}()
+	defer manager.Free()
 
 	// Run the performance tests
 	return run(manager, uaFilePath)

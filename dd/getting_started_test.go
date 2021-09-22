@@ -64,29 +64,13 @@ func runGettingStarted(perf dd.PerformanceProfile) string {
 	}
 
 	// Make sure manager object will be freed after the function execution
-	defer func() {
-		err := manager.Free()
-		if err != nil {
-			log.Fatalln("ERROR: Failed to free resource manager.")
-		}
-	}()
+	defer manager.Free()
 
 	// Create results
-	results, err := dd.NewResultsHash(
-		manager,
-		1,
-		0)
-	if err != nil {
-		log.Fatalln("ERROR: Failed to create a new results.")
-	}
+	results := dd.NewResultsHash(manager, 1, 0)
 
 	// Make sure results object is freed after function execution.
-	defer func() {
-		err = results.Free()
-		if err != nil {
-			log.Fatalln("ERROR: Failed to free results.")
-		}
-	}()
+	defer results.Free()
 
 	// User-Agent string of an iPhone mobile device.
 	const uaMobile = "Mozilla/5.0 (iPhone; CPU iPhone OS 7_1 like Mac OS X) " +
@@ -130,7 +114,8 @@ func runGettingStarted(perf dd.PerformanceProfile) string {
 }
 
 func Example_getting_started() {
-	performExample(dd.Default, runGettingStarted)
+	// performExample(dd.Default, runGettingStarted)
+	performExample(dd.BalancedTemp, runGettingStarted)
 	// Output:
 	// Mobile User-Agent: Mozilla/5.0 (iPhone; CPU iPhone OS 7_1 like Mac OS X) AppleWebKit/537.51.2 (KHTML, like Gecko) Version/7.0 Mobile/11D167 Safari/9537.53
 	// 	IsMobile: True
