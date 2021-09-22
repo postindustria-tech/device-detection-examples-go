@@ -11,6 +11,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"path/filepath"
 
 	"github.com/51Degrees/device-detection-go/dd"
 )
@@ -117,16 +118,28 @@ func process(
 	}
 }
 
-func Example_offline_processing() {
+func runOfflineProcessing(perf dd.PerformanceProfile) string {
 	// Initialise manager
 	manager := dd.NewResourceManager()
-	config := dd.NewConfigHash(dd.Balanced)
-	filePath := "../device-detection-go/dd/device-detection-cxx/device-detection-data/51Degrees-LiteV4.1.hash"
-	uaFilePath := "../device-detection-go/dd/device-detection-cxx/device-detection-data/20000 User Agents.csv"
-	outputFilePath := "../device-detection-go/dd/device-detection-cxx/device-detection-data/20000 User Agents.processed.csv"
-	config.SetUpdateMatchedUserAgent(true)
+	config := dd.NewConfigHash(perf)
+	filePath := getFilePath([]string{liteDataFile})
+	uaFilePath := getFilePath([]string{uaFile})
+	uaDir := filepath.Dir(uaFilePath)
+	uaBase := filepath.Base(uaFilePath)
+	outputFilePath := fmt.Sprintf("%s/%s.processed.csv", uaDir, uaBase)
+	// Get base path
+	basePath, err := os.Getwd()
+	if err != nil {
+		log.Fatalln("Failed to get current directory.")
+	}
+	// Get relative output path for testing
+	relOutputFilePath, err := filepath.Rel(basePath, outputFilePath)
+	if err != nil {
+		log.Fatalln("Failed to get relative output file path.")
+	}
 
-	err := dd.InitManagerFromFile(
+	config.SetUpdateMatchedUserAgent(true)
+	err = dd.InitManagerFromFile(
 		manager,
 		*config,
 		"IsMobile,BrowserName,DeviceType,PriceBand,ReleaseMonth,ReleaseYear",
@@ -144,8 +157,11 @@ func Example_offline_processing() {
 	}()
 
 	process(manager, uaFilePath, outputFilePath)
-	fmt.Printf("FINISHED")
+	return fmt.Sprintf("Output to \"%s\".\n", relOutputFilePath)
+}
 
+func Example_offline_processing() {
+	performExample(dd.Default, runOfflineProcessing)
 	// Output:
-	// FINISHED
+	// Output to "../device-detection-go/dd/device-detection-cxx/device-detection-data/20000 User Agents.csv.processed.csv".
 }

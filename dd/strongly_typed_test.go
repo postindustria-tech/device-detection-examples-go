@@ -8,4 +8,6 @@ results.
 // import "fmt"
 // import "github.com/51Degrees/device-detection-go/ddonpremise"
 
-func Example_StronglyTyped() {}
+func Example_strongly_typed() {
+	// TODO: To be implemented
+}

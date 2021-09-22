@@ -6,11 +6,10 @@ This example illustrates the performance 51Degrees device detection solution.
 
 import ( //	"runtime"
 	"bufio"
-	"errors"
 	"fmt"
-	"io/fs"
 	"log"
 	"os"
+	"path/filepath"
 	"runtime"
 	"strings"
 	"sync"
@@ -175,20 +174,24 @@ func checkWriteError(err error) {
 	}
 }
 
-// Print report to a report file
-func printReport(caliR *report, actR *report) {
-	// Check if a report file already exists
-	if _, err := os.Stat(reportFile); err == nil || errors.Is(err, fs.ErrExist) {
-		// If no 'force' option is specified then terminate.
-		if !strings.EqualFold(os.Args[len(os.Args)-1], "force") {
-			log.Fatalf("ERROR: A report file \"%s\" already exists.", reportFile)
-		}
+// Print report to a report file and return output message.
+func printReport(caliR *report, actR *report) string {
+	// Get base path
+	basePath, err := os.Getwd()
+	if err != nil {
+		log.Fatalln("Failed to get current directory.")
+	}
+	reportFilePath := basePath + "/" + reportFile
+	// Get relative output path for testing
+	relReportFilePath, err := filepath.Rel(basePath, reportFilePath)
+	if err != nil {
+		log.Fatalln("Failed to get relative output file path.")
 	}
 
 	// Create a report file
-	f, err := os.Create(reportFile)
+	f, err := os.Create(reportFilePath)
 	if err != nil {
-		log.Fatalf("ERROR: Failed to create report file \"%s\".", reportFile)
+		log.Fatalf("ERROR: Failed to create report file \"%s\".", reportFilePath)
 	}
 	defer f.Close()
 
@@ -216,14 +219,15 @@ func printReport(caliR *report, actR *report) {
 	_, err = fmt.Fprintf(w, "Number of CPUs: %d\n", runtime.NumCPU())
 	checkWriteError(err)
 	w.Flush()
+	return fmt.Sprintf("Output report to file \"%s\".\n", relReportFilePath)
 }
 
 // Run the performance example. Performs two phase: calibration and actual
 // detection. Processing time of each phase is recorded to produce the actual
-// processing time per detection
+// processing time per detection. Return output messages.
 func run(
 	manager *dd.ResourceManager,
-	uaFilePath string) {
+	uaFilePath string) string {
 	// Calibration
 	caliReport := report{0, 0, 0, 0}
 	start := time.Now()
@@ -249,15 +253,15 @@ func run(
 	}
 
 	// Print the final performance report
-	printReport(&caliReport, &actReport)
+	return printReport(&caliReport, &actReport)
 }
 
 // Setup all configuration settings required for running this example.
 // Run the example.
-func runPerformanceExample(
-	dataFilePath string,
-	uaFilePath string,
-	perf dd.PerformanceProfile) {
+func runPerformance(perf dd.PerformanceProfile) string {
+	dataFilePath := getFilePath([]string{liteDataFile})
+	uaFilePath := getFilePath([]string{uaFile})
+
 	// Create Resource Manager
 	manager := dd.NewResourceManager()
 	config := dd.NewConfigHash(dd.InMemory)
@@ -284,18 +288,11 @@ func runPerformanceExample(
 	}()
 
 	// Run the performance tests
-	run(manager, uaFilePath)
+	return run(manager, uaFilePath)
 }
 
 func Example_performance() {
-	// Data file path
-	dataFilePath := "../device-detection-go/dd/device-detection-cxx/device-detection-data/51Degrees-LiteV4.1.hash"
-	// User-Agents file path
-	uaFilePath := "../device-detection-go/dd/device-detection-cxx/device-detection-data/20000 User Agents.csv"
-
-	runPerformanceExample(dataFilePath, uaFilePath, dd.Balanced)
-	fmt.Printf("FINISHED")
-
+	performExample(dd.InMemory, runPerformance)
 	// The performance is output to a file 'performance_report.log' with content
 	// similar as below:
 	//   Average 0.01510 ms per User-Agent
@@ -305,5 +302,5 @@ func Example_performance() {
 	//   Number of CPUs: 2
 
 	// Output:
-	// FINISHED
+	// Output report to file "performance_report.log".
 }

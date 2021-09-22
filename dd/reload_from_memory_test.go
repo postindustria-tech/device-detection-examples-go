@@ -8,4 +8,6 @@ content held in the memory.
 // import "fmt"
 // import "github.com/51Degrees/device-detection-go/ddonpremise"
 
-func Example_ReloadFromMemory() {}
+func Example_reload_from_memory() {
+	// TODO: To be implemented
+}

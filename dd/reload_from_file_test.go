@@ -8,4 +8,6 @@ a file.
 // import "fmt"
 // import "github.com/51Degrees/device-detection-go/ddonpremise"
 
-func Example_ReloadFromFile() {}
+func Example_reload_from_file() {
+	// TODO: To be implemented
+}
