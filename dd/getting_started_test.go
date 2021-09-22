@@ -114,8 +114,7 @@ func runGettingStarted(perf dd.PerformanceProfile) string {
 }
 
 func Example_getting_started() {
-	// performExample(dd.Default, runGettingStarted)
-	performExample(dd.BalancedTemp, runGettingStarted)
+	performExample(dd.Default, runGettingStarted)
 	// Output:
 	// Mobile User-Agent: Mozilla/5.0 (iPhone; CPU iPhone OS 7_1 like Mac OS X) AppleWebKit/537.51.2 (KHTML, like Gecko) Version/7.0 Mobile/11D167 Safari/9537.53
 	// 	IsMobile: True
