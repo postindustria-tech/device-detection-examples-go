@@ -60,7 +60,7 @@ func matchUserAgent(
 			100,
 			",")
 		if err != nil {
-			log.Fatalln("ERROR: Failed to get resuts values string.")
+			log.Fatalln(err)
 		}
 
 		// Update report
@@ -261,7 +261,7 @@ func runPerformance(perf dd.PerformanceProfile) string {
 		"IsMobile",
 		dataFilePath)
 	if err != nil {
-		log.Fatalln("ERROR: Failed to initialize resource manager.")
+		log.Fatalln(err)
 	}
 
 	// Make sure manager object will be freed after the function execution

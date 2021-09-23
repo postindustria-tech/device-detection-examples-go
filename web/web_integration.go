@@ -9,6 +9,7 @@ import (
 	"html/template"
 	"log"
 	"net/http"
+	"strings"
 
 	"github.com/51Degrees/device-detection-go/dd"
 )
@@ -102,8 +103,16 @@ func main() {
 	// Initialise manager
 	manager = dd.NewResourceManager()
 	config = dd.NewConfigHash(dd.Balanced)
-	filePath := "../device-detection-go/dd/device-detection-cxx/device-detection-data/51Degrees-LiteV4.1.hash"
-	err := dd.InitManagerFromFile(
+	fileNames := []string{"51Degrees-LiteV4.1.hash"}
+	filePath, err := dd.GetFilePath(
+		"../device-detection-go",
+		fileNames)
+	if err != nil {
+		log.Fatalf("Could not find any file that matches any of \"%s\".\n",
+			strings.Join(fileNames, ", "))
+	}
+	// Init manager
+	err = dd.InitManagerFromFile(
 		manager,
 		*config,
 		"",

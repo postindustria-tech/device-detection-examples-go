@@ -20,7 +20,7 @@ func match(
 	// Perform detection
 	err := results.MatchUserAgent(ua)
 	if err != nil {
-		log.Fatalln("ERROR: Failed to perform detection on a User-Agent.")
+		log.Fatalln(err)
 	}
 
 	propertyName := "IsMobile"
@@ -31,14 +31,12 @@ func match(
 		100,
 		",")
 	if err != nil {
-		log.Fatalln("ERROR: Failed to get results values")
+		log.Fatalln(err)
 	}
 
 	hasValues, err := results.HasValues(propertyName)
 	if err != nil {
-		log.Fatalf(
-			"ERROR: Failed to check if a matched value exists for property "+
-				"%s.\n", propertyName)
+		log.Fatalln(err)
 	}
 
 	if !hasValues {
@@ -60,7 +58,7 @@ func runGettingStarted(perf dd.PerformanceProfile) string {
 		"",
 		filePath)
 	if err != nil {
-		log.Fatalln("ERROR: Failed to initialize resource manager.")
+		log.Fatalln(err)
 	}
 
 	// Make sure manager object will be freed after the function execution

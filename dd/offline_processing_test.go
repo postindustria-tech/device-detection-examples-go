@@ -25,7 +25,7 @@ func processUserAgent(
 	err := results.MatchUserAgent(ua)
 	if err != nil {
 		log.Fatalf(
-			"ERROR: Failed to perform detection on User-Agent \"%s\".\n", ua)
+			"ERROR: \"%s\" on User-Agent \"%s\".\n", err, ua)
 	}
 }
 
@@ -82,7 +82,7 @@ func process(
 		for i := 0; i < len(available); i++ {
 			hasValues, err := results.HasValuesByIndex(i)
 			if err != nil {
-				log.Fatal("ERROR: Failed to get 'HasValues'.")
+				log.Fatalln(err)
 			}
 
 			// Write empty value if one isn't available
@@ -94,7 +94,7 @@ func process(
 					100,
 					",")
 				if err != nil {
-					log.Fatal("ERROR: Failed to get Values string.")
+					log.Fatalln(err)
 				}
 
 				fmt.Fprintf(w, ",%s", value)
@@ -131,7 +131,7 @@ func runOfflineProcessing(perf dd.PerformanceProfile) string {
 		"IsMobile,BrowserName,DeviceType,PriceBand,ReleaseMonth,ReleaseYear",
 		filePath)
 	if err != nil {
-		log.Fatalln("ERROR: Failed to initialize resource manager.")
+		log.Fatalln(err)
 	}
 
 	// Make sure manager object will be freed after the function execution
