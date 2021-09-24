@@ -53,9 +53,8 @@ func getValue(
 	results *dd.ResultsHash,
 	propertyName string) string {
 	// Get the values in string
-	value, _, err := results.ValuesString(
+	value, err := results.ValuesString(
 		propertyName,
-		100,
 		",")
 	if err != nil {
 		log.Fatalln("ERROR: Failed to get results values string.")

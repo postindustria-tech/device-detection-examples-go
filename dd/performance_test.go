@@ -55,9 +55,8 @@ func matchUserAgent(
 		results.MatchUserAgent(ua)
 
 		// Get the value in string
-		value, _, err := results.ValuesString(
+		value, err := results.ValuesString(
 			"IsMobile",
-			100,
 			",")
 		if err != nil {
 			log.Fatalln(err)

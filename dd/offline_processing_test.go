@@ -89,9 +89,8 @@ func process(
 			if !hasValues {
 				fmt.Fprintf(w, ",\"\"")
 			} else {
-				value, _, err := results.ValuesString(
+				value, err := results.ValuesString(
 					"IsMobile",
-					100,
 					",")
 				if err != nil {
 					log.Fatalln(err)
