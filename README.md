@@ -74,3 +74,5 @@ go run web_integration.go
 ```
 
 For futher details of how to run each example, please read more at the comment section located at the top of each example file.
+
+**NOTE**: `device-detection-examples-go` references `device-detection-go` as a dependency in `go.mod`. However since C core static libraries are required to be built before `device-detection-go` can be used, it is recommended to use `device-detection-go` locally. For more details, please follow `device-detection-go` README.md. For this example module, the `device-detection-go` module path is replaced with the relative path to the submodule `device-detection-go` location using `go mod edit --replace`. Please see content of `go.mod` for how `device-detection-go` is referenced.
