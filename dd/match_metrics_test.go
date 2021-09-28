@@ -23,8 +23,7 @@
 package dd_test
 
 /*
-This example illustrates how users can obtain further details about a match
-via match metrics.
+TODO: To be implemented
 */
 
 // import "fmt"

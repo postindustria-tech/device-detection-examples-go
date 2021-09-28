@@ -23,8 +23,23 @@
 package dd_test
 
 /*
-This example illustrates how to perform simple device detections on given
-User-Agent strings.
+This example illustrates how to process a list of User-Agents from file and
+output detection metrics and properties of each User-Agent to another file for
+further evaluation.
+
+Expected output is as described at the "// Output:..." section locate at the
+bottom of this example.
+
+To run this example, perform the following command:
+```
+go test -run Example_offline_processing
+```
+
+This example will output to a file located at
+"../device-detection-go/dd/device-detection-cxx/device-detection-data/20000 User Agents.processed.csv".
+This contains the detection metrics User-Agent,Drift,Difference,Iterations and
+available properties for each User-Agent.
+
 */
 
 import (
@@ -34,6 +49,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/51Degrees/device-detection-go/dd"
 )
@@ -132,7 +148,7 @@ func runOfflineProcessing(perf dd.PerformanceProfile) string {
 	filePath := getFilePath([]string{liteDataFile})
 	uaFilePath := getFilePath([]string{uaFile})
 	uaDir := filepath.Dir(uaFilePath)
-	uaBase := filepath.Base(uaFilePath)
+	uaBase := strings.TrimSuffix(filepath.Base(uaFilePath), filepath.Ext(uaFilePath))
 	outputFilePath := fmt.Sprintf("%s/%s.processed.csv", uaDir, uaBase)
 	// Get base path
 	basePath, err := os.Getwd()
@@ -165,5 +181,5 @@ func runOfflineProcessing(perf dd.PerformanceProfile) string {
 func Example_offline_processing() {
 	performExample(dd.Default, runOfflineProcessing)
 	// Output:
-	// Output to "../device-detection-go/dd/device-detection-cxx/device-detection-data/20000 User Agents.csv.processed.csv".
+	// Output to "../device-detection-go/dd/device-detection-cxx/device-detection-data/20000 User Agents.processed.csv".
 }

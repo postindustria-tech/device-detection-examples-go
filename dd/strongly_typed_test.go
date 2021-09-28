@@ -23,8 +23,7 @@
 package dd_test
 
 /*
-This example illustrates how to obtain strongly typed value from detection
-results.
+TODO: To be implemented
 */
 
 // import "fmt"

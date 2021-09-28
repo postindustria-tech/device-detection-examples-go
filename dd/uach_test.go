@@ -23,9 +23,7 @@
 package dd_test
 
 /*
-This example illustrates how User-Agent Client Hints can be used to detect a
-device and how response headers can be added to request further details from
-client device.
+TODO: To be implemented
 */
 
 // import "fmt"

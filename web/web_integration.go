@@ -23,8 +23,26 @@
 package main
 
 /*
-This example illustrates how to perform simple device detections on given
-User-Agent strings.
+This example illustrates how to perform device detection on User-Agent extracted
+from web request.
+
+To run this example, perform the following command:
+```
+go run web_integration.go
+```
+This will start the application at "localhost:8000". From a browser of your choice,
+enter "localhost:8000" in the URL input. A similar return as the following is expected:
+```
+Browser: Chrome
+
+Screen Pixels Width: Unknown
+```
+
+To be sure that the application works with different User-Agents, `curl` can be
+used:
+```
+curl -A [User-Agent string] localhost:8000
+```
 */
 
 import (

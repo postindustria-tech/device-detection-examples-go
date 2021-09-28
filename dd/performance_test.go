@@ -23,7 +23,25 @@
 package dd_test
 
 /*
-This example illustrates the performance 51Degrees device detection solution.
+This example illustrates the performance of 51Degrees device detection solution.
+
+Expected output is as described at the "// Output:..." section locate at the
+bottom of this example.
+
+To run this example, perform the following command:
+```
+go test -run Example_performance
+```
+
+This example will output a report to ./performance_report.log. The report
+content is in the below format:
+```
+Average 0.00456 ms per User-Agent
+Total User-Agents: 80000
+IsMobile User-Agents: 58076
+Processed User-Agents: 80000
+Number of CPUs: 2
+```
 */
 
 import ( //	"runtime"

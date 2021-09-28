@@ -23,8 +23,7 @@
 package dd_test
 
 /*
-This example illustrates how to reload the data used for detection process from
-a file.
+TODO: To be implemented
 */
 
 // import "fmt"

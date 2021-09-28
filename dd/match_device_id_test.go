@@ -23,8 +23,7 @@
 package dd_test
 
 /*
-This example illustrates how users can perform match against unique device id
-which could have been obtained from previous matches.
+TODO: To be implemented
 */
 
 // import "fmt"
