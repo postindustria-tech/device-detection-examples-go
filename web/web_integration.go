@@ -51,7 +51,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/51Degrees/device-detection-go/dd"
+	"github.com/51Degrees/device-detection-go/v4/dd"
 )
 
 // Properties required for a response page.

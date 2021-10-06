@@ -51,7 +51,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/51Degrees/device-detection-go/dd"
+	"github.com/51Degrees/device-detection-go/v4/dd"
 )
 
 // function match performs a match on an input User-Agent string and determine

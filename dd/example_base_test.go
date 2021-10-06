@@ -33,7 +33,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/51Degrees/device-detection-go/dd"
+	"github.com/51Degrees/device-detection-go/v4/dd"
 )
 
 // Constants

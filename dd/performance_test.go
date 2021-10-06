@@ -56,7 +56,7 @@ import ( //	"runtime"
 	"sync/atomic"
 	"time"
 
-	"github.com/51Degrees/device-detection-go/dd"
+	"github.com/51Degrees/device-detection-go/v4/dd"
 )
 
 // File to output the performance report

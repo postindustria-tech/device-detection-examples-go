@@ -37,7 +37,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/51Degrees/device-detection-go/dd"
+	"github.com/51Degrees/device-detection-go/v4/dd"
 )
 
 func TestMain(m *testing.M) {
