@@ -11,7 +11,7 @@ pr: none
 resources:
   pipelines:
   - pipeline: build-pipeline   # The name for the triggering build pipeline within this script
-    source: device-detection-go-examples-tag-repository # Name of the pipeline
+    source: device-detection-examples-go-tag-repository # Name of the pipeline
     trigger: true 
   repositories:
   - repository: ciTemplates # Id of the repository used to reference to in this script
