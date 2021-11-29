@@ -47,14 +47,7 @@ func match(
 
 	propertyName := "IsMobile"
 
-	// Get the values in string
-	value, err := results.ValuesString(
-		propertyName,
-		",")
-	if err != nil {
-		log.Fatalln(err)
-	}
-
+	// If results has values for required property
 	hasValues, err := results.HasValues(propertyName)
 	if err != nil {
 		log.Fatalln(err)
@@ -62,6 +55,14 @@ func match(
 
 	if !hasValues {
 		log.Printf("Property %s does not have a matched value.\n", propertyName)
+	}
+
+	// Get the values in string
+	value, err := results.ValuesString(
+		propertyName,
+		",")
+	if err != nil {
+		log.Fatalln(err)
 	}
 
 	return fmt.Sprintf("\tIsMobile: %s\n", value)

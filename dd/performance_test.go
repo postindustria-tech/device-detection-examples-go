@@ -112,36 +112,6 @@ func matchUserAgent(
 	defer wg.Done()
 }
 
-// Count the number of User-Agents in a User-Agents file and update
-// a report statistic
-func countUAFromFiles(
-	uaFilePath string,
-	rep *report) {
-	// Count the number of User Agents
-	f, err := os.OpenFile(uaFilePath, os.O_RDONLY, 0444)
-	if err != nil {
-		log.Fatalf("ERROR: Failed to open file \"%s\".\n", uaFilePath)
-	}
-	defer func() {
-		if err := f.Close(); err != nil {
-			log.Fatalf("ERROR: Failed to close file \"%s\".\n", uaFilePath)
-		}
-	}()
-
-	// Count the number of UA.
-	s := bufio.NewScanner(f)
-	defer func() {
-		if err := s.Err(); err != nil {
-			log.Fatalf("ERROR: Error during scanning file\"%s\".\n", uaFilePath)
-		}
-	}()
-
-	// Count the User-Agents
-	for s.Scan() {
-		rep.uaCount++
-	}
-}
-
 // Run the performance test. Determine the number of records in a User-Agent
 // file. Iterate through the User-Agent file and perform detection on each
 // User-Agent. Record the processing time and update a report statistic.
@@ -153,7 +123,7 @@ func performDetections(
 	// Create a wait group
 	var wg sync.WaitGroup
 
-	countUAFromFiles(uaFilePath, rep)
+	rep.uaCount = countUAFromFiles(uaFilePath)
 	rep.uaCount *= iterationCount
 
 	for i := 0; i < iterationCount; i++ {

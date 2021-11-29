@@ -109,13 +109,33 @@ func process(
 	for scanner.Scan() {
 		processUserAgent(results, scanner.Text())
 		// Output the matched  user agent string, drift, difference, iterations
+		userAgent, err := results.UserAgent(0)
+		if err != nil {
+			log.Fatal(err.Error())
+		}
+
+		drift, err := results.DriftByIndex(0)
+		if err != nil {
+			log.Fatal(err.Error())
+		}
+
+		difference, err := results.DifferenceByIndex(0)
+		if err != nil {
+			log.Fatal(err.Error())
+		}
+
+		iterations, err := results.IterationsByIndex(0)
+		if err != nil {
+			log.Fatal(err.Error())
+		}
+
 		fmt.Fprintf(
 			w,
 			"\"%s\",%d,%d,%d",
-			results.UserAgent(0),
-			results.DriftByIndex(0),
-			results.DifferenceByIndex(0),
-			results.IterationsByIndex(0))
+			userAgent,
+			drift,
+			difference,
+			iterations)
 		// Get the values in string
 		for i := 0; i < len(available); i++ {
 			hasValues, err := results.HasValuesByIndex(i)
@@ -160,6 +180,8 @@ func runOfflineProcessing(perf dd.PerformanceProfile) string {
 	if err != nil {
 		log.Fatalln("Failed to get relative output file path.")
 	}
+	// Convert path separators to '/'
+	relOutputFilePath = filepath.ToSlash(relOutputFilePath)
 
 	config.SetUpdateMatchedUserAgent(true)
 	err = dd.InitManagerFromFile(
