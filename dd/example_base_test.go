@@ -28,6 +28,7 @@ User-Agent strings.
 */
 
 import (
+	"bufio"
 	"fmt"
 	"log"
 	"os"
@@ -68,6 +69,37 @@ func isFlagOn(value string) bool {
 	return false
 }
 
+// Count the number of User-Agents in a User-Agents file and return the number
+// of user agents found.
+func countUAFromFiles(
+	uaFilePath string) uint64 {
+	var count uint64 = 0
+	// Count the number of User Agents
+	f, err := os.OpenFile(uaFilePath, os.O_RDONLY, 0444)
+	if err != nil {
+		log.Fatalf("ERROR: Failed to open file \"%s\".\n", uaFilePath)
+	}
+	defer func() {
+		if err := f.Close(); err != nil {
+			log.Fatalf("ERROR: Failed to close file \"%s\".\n", uaFilePath)
+		}
+	}()
+
+	// Count the number of UA.
+	s := bufio.NewScanner(f)
+	defer func() {
+		if err := s.Err(); err != nil {
+			log.Fatalf("ERROR: Error during scanning file\"%s\".\n", uaFilePath)
+		}
+	}()
+
+	// Count the User-Agents
+	for s.Scan() {
+		count++
+	}
+	return count
+}
+
 // This is a wrapper function which execute a function that contains
 // example code with an input performance profile or all performance
 // profiles if performed under CI.
@@ -79,7 +111,7 @@ func performExample(perf dd.PerformanceProfile, eFunc ExampleFunc) {
 			dd.Default,
 			dd.LowMemory,
 			dd.Balanced,
-			// dd.BalancedTemp, // TODO: Enable once fixed
+			dd.BalancedTemp,
 			dd.HighPerformance,
 			dd.InMemory,
 		}

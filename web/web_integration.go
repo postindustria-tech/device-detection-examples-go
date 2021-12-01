@@ -46,6 +46,7 @@ curl -A [User-Agent string] localhost:8000
 */
 
 import (
+	"fmt"
 	"html/template"
 	"log"
 	"net/http"
@@ -164,5 +165,7 @@ func main() {
 	defer manager.Free()
 
 	http.HandleFunc("/", handler)
-	log.Fatal(http.ListenAndServe("localhost:8000", nil))
+	const port = 8000
+	fmt.Printf("Server listening on port: %d\n", port)
+	log.Fatal(http.ListenAndServe(fmt.Sprintf("localhost:%d", port), nil))
 }
