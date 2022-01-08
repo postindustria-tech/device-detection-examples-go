@@ -65,25 +65,26 @@ func matchDeviceId(
 
 	// If results has values for required property
 	propertyName := "IsMobile"
-	// TODO: Uncomment once hasValues is fixed in C.
-	/*hasValues, err := devIdResults.HasValues(propertyName)
+	hasValues, err := devIdResults.HasValues(propertyName)
 	if err != nil {
 		log.Fatalln(err)
 	}
 
+	returnStr := ""
 	if !hasValues {
-		log.Printf("Property %s does not have a matched value.\n", propertyName)
-	}*/
+		returnStr = fmt.Sprintf("Property %s does not have a matched value.\n", propertyName)
+	} else {
+		// Get the values in string
+		value, err := devIdResults.ValuesString(
+			propertyName,
+			",")
+		if err != nil {
+			log.Fatalln(err)
+		}
 
-	// Get the values in string
-	value, err := devIdResults.ValuesString(
-		propertyName,
-		",")
-	if err != nil {
-		log.Fatalln(err)
+		returnStr = fmt.Sprintf("\tIsMobile: %s\n", value)
 	}
-
-	return fmt.Sprintf("\tIsMobile: %s\n", value)
+	return returnStr
 }
 
 func runMatchDeviceId(perf dd.PerformanceProfile) string {

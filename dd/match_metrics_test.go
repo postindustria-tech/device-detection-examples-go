@@ -69,43 +69,44 @@ func matchMetrics(
 		log.Fatalln(err)
 	}
 
+	returnStr := ""
 	if !hasValues {
-		log.Printf("Property %s does not have a matched value.\n", propertyName)
-	}
+		returnStr = fmt.Sprintf("Property %s does not have a matched value.\n", propertyName)
+	} else {
+		deviceId, err := results.DeviceId()
+		if err != nil {
+			log.Fatalln(err)
+		}
 
-	deviceId, err := results.DeviceId()
-	if err != nil {
-		log.Fatalln(err)
-	}
+		drift := results.Drift()
+		difference := results.Difference()
+		iterations := results.Iterations()
+		method := results.Method()
+		methodStr := "NONE"
+		switch method {
+		case dd.Performance:
+			methodStr = "PERFORMANCE"
+		case dd.Combined:
+			methodStr = "COMBINED"
+		case dd.Predictive:
+			methodStr = "PREDICTIVE"
+		default:
+			methodStr = "NONE"
+		}
+		// We only use one User-Agent so there can only be one result
+		matchedUserAgent, err := results.UserAgent(0)
+		if err != nil {
+			log.Fatal(err.Error())
+		}
 
-	drift := results.Drift()
-	difference := results.Difference()
-	iterations := results.Iterations()
-	method := results.Method()
-	methodStr := "NONE"
-	switch method {
-	case dd.Performance:
-		methodStr = "PERFORMANCE"
-	case dd.Combined:
-		methodStr = "COMBINED"
-	case dd.Predictive:
-		methodStr = "PREDICTIVE"
-	default:
-		methodStr = "NONE"
+		returnStr = fmt.Sprintf("\tIsMobile: %s\n", value)
+		returnStr += fmt.Sprintf("\tId: %s\n", deviceId)
+		returnStr += fmt.Sprintf("\tDrift: %d\n", drift)
+		returnStr += fmt.Sprintf("\tDifference: %d\n", difference)
+		returnStr += fmt.Sprintf("\tIterations: %d\n", iterations)
+		returnStr += fmt.Sprintf("\tMethod: %s\n", methodStr)
+		returnStr += fmt.Sprintf("\tSub Strings: %s\n", matchedUserAgent)
 	}
-	// We only use one User-Agent so there can only be one result
-	matchedUserAgent, err := results.UserAgent(0)
-	if err != nil {
-		log.Fatal(err.Error())
-	}
-
-	returnStr := fmt.Sprintf("\tIsMobile: %s\n", value)
-	returnStr += fmt.Sprintf("\tId: %s\n", deviceId)
-	returnStr += fmt.Sprintf("\tDrift: %d\n", drift)
-	returnStr += fmt.Sprintf("\tDifference: %d\n", difference)
-	returnStr += fmt.Sprintf("\tIterations: %d\n", iterations)
-	returnStr += fmt.Sprintf("\tMethod: %s\n", methodStr)
-	returnStr += fmt.Sprintf("\tSub Strings: %s\n", matchedUserAgent)
 	return returnStr
 }
 

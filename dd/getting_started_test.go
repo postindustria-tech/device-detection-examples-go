@@ -53,19 +53,21 @@ func match(
 		log.Fatalln(err)
 	}
 
+	returnStr := ""
 	if !hasValues {
-		log.Printf("Property %s does not have a matched value.\n", propertyName)
+		returnStr = fmt.Sprintf("Property %s does not have a matched value.\n", propertyName)
+	} else {
+		// Get the values in string
+		value, err := results.ValuesString(
+			propertyName,
+			",")
+		if err != nil {
+			log.Fatalln(err)
+		}
+		returnStr = fmt.Sprintf("\tIsMobile: %s\n", value)
 	}
 
-	// Get the values in string
-	value, err := results.ValuesString(
-		propertyName,
-		",")
-	if err != nil {
-		log.Fatalln(err)
-	}
-
-	return fmt.Sprintf("\tIsMobile: %s\n", value)
+	return returnStr
 }
 
 func runGettingStarted(perf dd.PerformanceProfile) string {
