@@ -169,8 +169,7 @@ func TestHandler(t *testing.T) {
 				{
 					"Accept-CH",
 					[]string{
-						"Sec-CH-UA-Arch",
-						"Sec-CH-UA-Full-Version",
+						"Sec-CH-UA-Full-Version-List",
 						"Sec-CH-UA-Mobile",
 						"Sec-CH-UA-Model",
 						"Sec-CH-UA-Platform-Version",
@@ -200,7 +199,6 @@ func TestHandler(t *testing.T) {
 				{
 					"Accept-CH",
 					[]string{
-						"Sec-CH-UA-Arch",
 						"Sec-CH-UA-Mobile",
 						"Sec-CH-UA-Model",
 					},
@@ -214,8 +212,10 @@ func TestHandler(t *testing.T) {
 				{
 					"Accept-CH",
 					[]string{
-						"Sec-CH-UA-Full-Version",
 						"Sec-CH-UA",
+						"Sec-CH-UA-Full-Version-List",
+						"Sec-CH-UA-Mobile",
+						"Sec-CH-UA-Platform",
 					},
 				},
 			},
@@ -245,38 +245,39 @@ func TestHandler(t *testing.T) {
 	h := http.HandlerFunc(handler)
 
 	for _, data := range testData {
-		// Create a ResponseRecorder to capture the response
-		rr := httptest.NewRecorder()
-		// Initialise manager
-		manager = dd.NewResourceManager()
-		config = dd.NewConfigHash(dd.Balanced)
-		config.SetUseUpperPrefixHeaders(false)
-		dataFiles := []string{"51Degrees-LiteV4.1.hash"}
-		filePath, err := dd.GetFilePath("../device-detection-go", dataFiles)
-		if err != nil {
-			manager.Free()
-			log.Fatalf("Cannot find file that matches any of \"%s\".\n",
-				strings.Join(dataFiles, ", "))
-		}
-
-		err = dd.InitManagerFromFile(
-			manager,
-			*config,
-			data.properties,
-			filePath)
-		if err != nil {
-			manager.Free()
-			log.Fatalln("ERROR: Failed to initialize resource manager.")
-		}
-
-		// Create http request for testing
-		r, err := http.NewRequest("GET", "/", nil)
-		if err != nil {
-			manager.Free()
-			log.Fatalln("ERROR: Failed to create new http request.")
-		}
 
 		for _, ua := range data.uas {
+			// Create a ResponseRecorder to capture the response
+			rr := httptest.NewRecorder()
+			// Initialise manager
+			manager = dd.NewResourceManager()
+			config = dd.NewConfigHash(dd.Balanced)
+			config.SetUseUpperPrefixHeaders(false)
+			dataFiles := []string{"51Degrees-LiteV4.1.hash"}
+			filePath, err := dd.GetFilePath("../device-detection-go", dataFiles)
+			if err != nil {
+				manager.Free()
+				log.Fatalf("Cannot find file that matches any of \"%s\".\n",
+					strings.Join(dataFiles, ", "))
+			}
+
+			err = dd.InitManagerFromFile(
+				manager,
+				*config,
+				data.properties,
+				filePath)
+			if err != nil {
+				manager.Free()
+				log.Fatalln("ERROR: Failed to initialize resource manager.")
+			}
+
+			// Create http request for testing
+			r, err := http.NewRequest("GET", "/", nil)
+			if err != nil {
+				manager.Free()
+				log.Fatalln("ERROR: Failed to create new http request.")
+			}
+
 			r.Header.Set(
 				"User-Agent",
 				ua,
@@ -320,9 +321,8 @@ func TestHandler(t *testing.T) {
 					}
 				}
 			}
+			// Make sure manager object will be freed after the function execution
+			manager.Free()
 		}
-
-		// Make sure manager object will be freed after the function execution
-		manager.Free()
 	}
 }
