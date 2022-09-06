@@ -197,16 +197,17 @@ func extractEvidenceStrings(r *http.Request, keys []dd.EvidenceKey) []stringEvid
 		switch e.Prefix {
 		case dd.HttpEvidenceQuery:
 			// Get evidence from query parameter
-			if r.URL.Query().Has(lowerKey) {
+			queryVal := r.URL.Query().Get(lowerKey)
+			if queryVal != "" {
 				evidence = append(
-					evidence, stringEvidence{queryPrefix, e.Key, r.URL.Query().Get(lowerKey)})
+					evidence, stringEvidence{queryPrefix, e.Key, queryVal})
 			}
 		default:
 			// Get evidence from headers
-			headerKey := r.Header.Get(lowerKey)
-			if headerKey != "" {
+			headerVal := r.Header.Get(lowerKey)
+			if headerVal != "" {
 				evidence = append(
-					evidence, stringEvidence{headerPrefix, e.Key, headerKey})
+					evidence, stringEvidence{headerPrefix, e.Key, headerVal})
 			}
 		}
 	}
