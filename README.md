@@ -7,13 +7,30 @@
 This repository contains examples of how to use module [device-detection-go](https://github.com/51degrees/device-detection-go)
 
 ## Pre-requisites
+To run these examples please take the following steps:
 
-To run these examples, please read `device-detection-go` README.md for details on the pre-requisites.
+### 1. Fetch the submodules
+Checkout this git repo and run
+```
+git submodule update --init --recursive
+``` 
+to fetch all the dependencies. 
 
-### Data file
+### 2. Build the go module
+
+Build the `dd` go module contained in the submodule directory:
+```
+cd device-detection-go/dd
+pwsh -File scripts/prebuild.ps1
+```
+
+For more details on building and using the go module beyond the examples please read `device-detection-go` [README.md](https://github.com/51degrees/device-detection-go). 
+
+### 3. Obtain a data file
 
 In order to perform device detection, you will need to use a 51Degrees data file. 
-A 'lite' file can be found at [device-detection-data](https://github.com/51degrees/device-detection-data) or in the `device-detection-go/dd/device-detection-cxx/device-detection-data` submodule when clone this repository recursively.
+A 'lite' file can be found at [device-detection-data](https://github.com/51degrees/device-detection-data) or in the `device-detection-go/dd/device-detection-cxx/device-detection-data` submodule directory.
+
 This 'lite' file has a significantly reduced set of properties. To obtain a 
 file with a more complete set of device properties see the 
 [51Degrees website](https://51degrees.com/pricing). 
@@ -25,11 +42,16 @@ sudo apt-get install git-lfs
 git lfs install
 ```
 
-Then, navigate to the `device-detection-data` directory and execute:
+Then, navigate to the `device-detection-data` directory at the above path:
+```
+cd device-detection-go/dd/device-detection-cxx/device-detection-data
+```
+and execute:
 
 ```
 git lfs pull
 ```
+You should be all set - back up to the root directory of this repository to run the examples.
 
 ## Examples
 The examples are grouped into Go testable examples and Go app.
@@ -42,7 +64,7 @@ go test -run Example_getting_started
 go run web_integration.go
 ```
 
-Below is a table that describe the examples:
+Below is a table that describes the examples:
 
 |Example|Description|
 |-------|-----------|
