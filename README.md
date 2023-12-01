@@ -7,54 +7,23 @@
 This repository contains examples of how to use module [device-detection-go](https://github.com/51degrees/device-detection-go)
 
 ## Pre-requisites
-To run these examples please take the following steps:
-
-### 1. Fetch the submodules
-Checkout this git repo and run
-```
-git submodule update --init --recursive
-``` 
-to fetch all the dependencies. 
-
-### 2. Build the go module
-
-Build the `dd` go module contained in the submodule directory:
-```
-cd device-detection-go/dd
-pwsh -File scripts/prebuild.ps1
-```
-
-For more details on building and using the go module beyond the examples please read `device-detection-go` [README.md](https://github.com/51degrees/device-detection-go). 
-
-### 3. Obtain a data file
-
-In order to perform device detection, you will need to use a 51Degrees data file. 
-A 'lite' file can be found at [device-detection-data](https://github.com/51degrees/device-detection-data) or in the `device-detection-go/dd/device-detection-cxx/device-detection-data` submodule directory.
-
-This 'lite' file has a significantly reduced set of properties. To obtain a 
-file with a more complete set of device properties see the 
-[51Degrees website](https://51degrees.com/pricing). 
-If you want to use the lite file, you will need to install [GitLFS](https://git-lfs.github.com/).
-
-For Linux:
-```
-sudo apt-get install git-lfs
-git lfs install
-```
-
-Then, navigate to the `device-detection-data` directory at the above path:
-```
-cd device-detection-go/dd/device-detection-cxx/device-detection-data
-```
-and execute:
+To run these examples you will need a data file and example evidence for some of the tests.  To fetch these assets please run:
 
 ```
-git lfs pull
+pwsh ci/fetch-assets.ps1 .
 ```
-You should be all set - back up to the root directory of this repository to run the examples.
+
+or alternatively you can download them from [device-detection-data](https://github.com/51Degrees/device-detection-data) repo (the links are below) and put in the root of this repository. 
+
+- [51Degrees-LiteV4.1.hash](https://github.com/51Degrees/device-detection-data/blob/main/51Degrees-LiteV4.1.hash)
+- [20000 User Agents.csv](https://github.com/51Degrees/device-detection-data/blob/main/20000%20User%20Agents.csv)
 
 ## Examples
+
+**NOTE**: `device-detection-examples-go` references `device-detection-go` as a dependency in `go.mod`.  No additional actions should be required - the module will be downloaded and built when you do `go run`, `go test`, or `go build` explicitly for any example.  
+
 The examples are grouped into Go testable examples and Go app.
+
 - All examples under folder `dd` are testable examples and suffixed with `*_test.go` at the end. Expected output of these examples are in the comment section of each example (i.e.  // Output:...). This example can be run by `go test`. For example, to run the example `getting_started_test.go` we can use `go test`, passing the `Example_*` method name of the example which acts as the main entry point. The following command is run in the `dd` folder.
 ```
 go test -run Example_getting_started
@@ -81,11 +50,6 @@ Below is a table that describes the examples:
 
 ## Run examples
 
-Firstly, the `device-detection-examples-go` needs to be cloned recursively so that all submodules are checked out.
-
-Secondly, please follow the `device-detection-go` README.md to perform any prebuild steps and setup the module.
-
-Once `device-detection-go` is setup, we can start running the examples:
 - Navigate to `dd` folder. All examples here are testable and can be run as:
 ```
 go test -run [Name of Example_* method of the target example]
@@ -100,5 +64,3 @@ go run uach.go
 ```
 
 For futher details of how to run each example, please read more at the comment section located at the top of each example file.
-
-**NOTE**: `device-detection-examples-go` references `device-detection-go` as a dependency in `go.mod`. However since C core static libraries are required to be built before `device-detection-go` can be used, it is recommended to use `device-detection-go` locally. For more details, please follow `device-detection-go` README.md. For this example module, the `device-detection-go` module path is replaced with the relative path to the submodule `device-detection-go` location using `go mod edit --replace`. Please see content of `go.mod` for how `device-detection-go` is referenced.
