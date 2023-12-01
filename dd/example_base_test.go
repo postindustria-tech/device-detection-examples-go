@@ -48,7 +48,7 @@ type ExampleFunc func(p dd.PerformanceProfile) string
 // Returns a full path to a file to be used for examples
 func getFilePath(names []string) string {
 	filePath, err := dd.GetFilePath(
-		"../device-detection-go",
+		"..",
 		names,
 	)
 	if err != nil {

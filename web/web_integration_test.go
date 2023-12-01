@@ -45,7 +45,7 @@ func TestMain(m *testing.M) {
 	manager = dd.NewResourceManager()
 	config = dd.NewConfigHash(dd.Balanced)
 	dataFiles := []string{"51Degrees-LiteV4.1.hash"}
-	filePath, err := dd.GetFilePath("../device-detection-go", dataFiles)
+	filePath, err := dd.GetFilePath("..", dataFiles)
 	if err != nil {
 		log.Fatalf("Cannot find file that matches any of \"%s\".\n",
 			strings.Join(dataFiles, ", "))

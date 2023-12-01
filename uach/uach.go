@@ -324,7 +324,7 @@ func main() {
 	config.SetUseUpperPrefixHeaders(false)
 	fileNames := []string{"51Degrees-LiteV4.1.hash"}
 	filePath, err := dd.GetFilePath(
-		"../device-detection-go",
+		"..",
 		fileNames)
 	if err != nil {
 		log.Fatalf("Could not find any file that matches any of \"%s\".\n",
