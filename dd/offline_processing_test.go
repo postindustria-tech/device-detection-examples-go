@@ -203,5 +203,5 @@ func runOfflineProcessing(perf dd.PerformanceProfile) string {
 func Example_offline_processing() {
 	performExample(dd.Default, runOfflineProcessing)
 	// Output:
-	// Output to "../device-detection-go/dd/device-detection-cxx/device-detection-data/20000 User Agents.processed.csv".
+	// Output to "../20000 User Agents.processed.csv".
 }

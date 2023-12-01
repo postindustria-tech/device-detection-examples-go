@@ -46,7 +46,7 @@ func TestMain(m *testing.M) {
 	config = dd.NewConfigHash(dd.Balanced)
 	config.SetUseUpperPrefixHeaders(false)
 	dataFiles := []string{"51Degrees-LiteV4.1.hash"}
-	filePath, err := dd.GetFilePath("../device-detection-go", dataFiles)
+	filePath, err := dd.GetFilePath("..", dataFiles)
 	if err != nil {
 		log.Fatalf("Cannot find file that matches any of \"%s\".\n",
 			strings.Join(dataFiles, ", "))
@@ -254,7 +254,7 @@ func TestHandler(t *testing.T) {
 			config = dd.NewConfigHash(dd.Balanced)
 			config.SetUseUpperPrefixHeaders(false)
 			dataFiles := []string{"51Degrees-LiteV4.1.hash"}
-			filePath, err := dd.GetFilePath("../device-detection-go", dataFiles)
+			filePath, err := dd.GetFilePath("..", dataFiles)
 			if err != nil {
 				manager.Free()
 				log.Fatalf("Cannot find file that matches any of \"%s\".\n",
