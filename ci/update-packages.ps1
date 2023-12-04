@@ -8,6 +8,7 @@ param (
 
 Push-Location $RepoName
 try {
+    $env:GOPROXY = "direct"
     go get -u ./... || $(throw "'go get -u' failed")
     go mod tidy || $(throw "'go mod tidy' failed")
 } finally {
