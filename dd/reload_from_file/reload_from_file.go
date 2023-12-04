@@ -20,7 +20,7 @@
  * such notice(s) shall fulfill the requirements of that article.
  * ********************************************************************* */
 
-package dd_test
+package main
 
 /*
 Illustrates how dataset can be reloaded while detections are performed.
@@ -28,6 +28,7 @@ Illustrates how dataset can be reloaded while detections are performed.
 
 import (
 	"bufio"
+	dd_example "github.com/51Degrees/device-detection-examples-go/v4/dd"
 	"hash/fnv"
 	"log"
 	"os"
@@ -152,7 +153,7 @@ func runReloadFromFileSub(
 
 	// Count the number of User-Agents to be processed
 	var rep freport
-	rep.uaCount = countUAFromFiles(uaFilePath)
+	rep.uaCount = dd_example.CountUAFromFiles(uaFilePath)
 	rep.uaCount *= fIterationCount
 
 	// Perform detections
@@ -195,8 +196,8 @@ func runReloadFromFileSub(
 }
 
 func runReloadFromFile(perf dd.PerformanceProfile) string {
-	dataFilePath := getFilePath([]string{liteDataFile})
-	uaFilePath := getFilePath([]string{uaFile})
+	dataFilePath := dd_example.GetFilePath([]string{dd_example.LiteDataFile})
+	uaFilePath := dd_example.GetFilePath([]string{dd_example.UaFile})
 
 	// Create Resource Manager
 	manager := dd.NewResourceManager()
@@ -221,8 +222,8 @@ func runReloadFromFile(perf dd.PerformanceProfile) string {
 	return report
 }
 
-func Example_reload_from_file() {
-	performExample(dd.Default, runReloadFromFile)
+func main() {
+	dd_example.PerformExample(dd.Default, runReloadFromFile)
 	// The output log of this example is in for the following format:
 	//
 	// 2021/11/10 11:42:05 Reloaded '2' times.

@@ -20,7 +20,7 @@
  * such notice(s) shall fulfill the requirements of that article.
  * ********************************************************************* */
 
-package dd_test
+package main
 
 /*
 This example illustrates how to process a list of User-Agents from file and
@@ -45,6 +45,7 @@ available properties for each User-Agent.
 import (
 	"bufio"
 	"fmt"
+	dd_example "github.com/51Degrees/device-detection-examples-go/v4/dd"
 	"io"
 	"log"
 	"os"
@@ -165,8 +166,8 @@ func runOfflineProcessing(perf dd.PerformanceProfile) string {
 	// Initialise manager
 	manager := dd.NewResourceManager()
 	config := dd.NewConfigHash(perf)
-	filePath := getFilePath([]string{liteDataFile})
-	uaFilePath := getFilePath([]string{uaFile})
+	filePath := dd_example.GetFilePath([]string{dd_example.LiteDataFile})
+	uaFilePath := dd_example.GetFilePath([]string{dd_example.UaFile})
 	uaDir := filepath.Dir(uaFilePath)
 	uaBase := strings.TrimSuffix(filepath.Base(uaFilePath), filepath.Ext(uaFilePath))
 	outputFilePath := fmt.Sprintf("%s/%s.processed.csv", uaDir, uaBase)
@@ -200,8 +201,8 @@ func runOfflineProcessing(perf dd.PerformanceProfile) string {
 	return fmt.Sprintf("Output to \"%s\".\n", relOutputFilePath)
 }
 
-func Example_offline_processing() {
-	performExample(dd.Default, runOfflineProcessing)
+func main() {
+	dd_example.PerformExample(dd.Default, runOfflineProcessing)
 	// Output:
 	// Output to "../20000 User Agents.processed.csv".
 }

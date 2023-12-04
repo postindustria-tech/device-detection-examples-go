@@ -20,24 +20,31 @@
  * such notice(s) shall fulfill the requirements of that article.
  * ********************************************************************* */
 
-package dd_test
+package main
 
 /*
-This example illustrates how to perform simple device detections on given
-User-Agent strings.
+ This example illustrates how to perform simple device detections using
+ Device IDs.
 */
 
 import (
 	"fmt"
+	dd_example "github.com/51Degrees/device-detection-examples-go/v4/dd"
 	"log"
 
 	"github.com/51Degrees/device-detection-go/v4/dd"
 )
 
-// function match performs a match on an input User-Agent string and determine
-// if the device is a mobile device. Returns output string.
-func match(
+// function match performs a match on an input User-Agent, obtain the device id
+// and perform a second match using the obtained device-id. Then from the
+// returned result of the second match, determin if the device is a mobile
+// device. Returns output string.
+// This function use two ResultsHash inputs so that two matches can be performed
+// independently to guarantee the result of the second match is not impacted by
+// the result of the first match.
+func matchDeviceId(
 	results *dd.ResultsHash,
+	devIdResults *dd.ResultsHash,
 	ua string) string {
 	// Perform detection
 	err := results.MatchUserAgent(ua)
@@ -45,10 +52,21 @@ func match(
 		log.Fatalln(err)
 	}
 
-	propertyName := "IsMobile"
+	// Obtain DeviceId from results
+	deviceId, err := results.DeviceId()
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	// Obtain results again, using device Id.
+	err = devIdResults.MatchDeviceId(deviceId)
+	if err != nil {
+		log.Fatalln(err)
+	}
 
 	// If results has values for required property
-	hasValues, err := results.HasValues(propertyName)
+	propertyName := "IsMobile"
+	hasValues, err := devIdResults.HasValues(propertyName)
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -58,23 +76,23 @@ func match(
 		returnStr = fmt.Sprintf("Property %s does not have a matched value.\n", propertyName)
 	} else {
 		// Get the values in string
-		value, err := results.ValuesString(
+		value, err := devIdResults.ValuesString(
 			propertyName,
 			",")
 		if err != nil {
 			log.Fatalln(err)
 		}
+
 		returnStr = fmt.Sprintf("\tIsMobile: %s\n", value)
 	}
-
 	return returnStr
 }
 
-func runGettingStarted(perf dd.PerformanceProfile) string {
+func runMatchDeviceId(perf dd.PerformanceProfile) string {
 	// Initialise manager
 	manager := dd.NewResourceManager()
 	config := dd.NewConfigHash(perf)
-	filePath := getFilePath([]string{liteDataFile})
+	filePath := dd_example.GetFilePath([]string{dd_example.LiteDataFile})
 
 	err := dd.InitManagerFromFile(
 		manager,
@@ -90,9 +108,11 @@ func runGettingStarted(perf dd.PerformanceProfile) string {
 
 	// Create results
 	results := dd.NewResultsHash(manager, 1, 0)
+	devIdResults := dd.NewResultsHash(manager, 1, 0)
 
 	// Make sure results object is freed after function execution.
 	defer results.Free()
+	defer devIdResults.Free()
 
 	// User-Agent string of an iPhone mobile device.
 	const uaMobile = "Mozilla/5.0 (iPhone; CPU iPhone OS 7_1 like Mac OS X) " +
@@ -110,15 +130,15 @@ func runGettingStarted(perf dd.PerformanceProfile) string {
 
 	// Perform detection on mobile User-Agent
 	actual := fmt.Sprintf("Mobile User-Agent: %s\n", uaMobile)
-	actual += match(results, uaMobile)
+	actual += matchDeviceId(results, devIdResults, uaMobile)
 
 	// Perform detection on desktop User-Agent
 	actual += fmt.Sprintf("\nDesktop User-Agent: %s\n", uaDesktop)
-	actual += match(results, uaDesktop)
+	actual += matchDeviceId(results, devIdResults, uaDesktop)
 
 	// Perform detection on MediaHub User-Agent
 	actual += fmt.Sprintf("\nMediaHub User-Agent: %s\n", uaMediaHub)
-	actual += match(results, uaMediaHub)
+	actual += matchDeviceId(results, devIdResults, uaMediaHub)
 
 	// Expected output
 	expected := "Mobile User-Agent: Mozilla/5.0 (iPhone; CPU iPhone OS 7_1 like Mac OS X) AppleWebKit/537.51.2 (KHTML, like Gecko) Version/7.0 Mobile/11D167 Safari/9537.53\n"
@@ -135,8 +155,8 @@ func runGettingStarted(perf dd.PerformanceProfile) string {
 	return actual
 }
 
-func Example_getting_started() {
-	performExample(dd.Default, runGettingStarted)
+func main() {
+	dd_example.PerformExample(dd.Default, runMatchDeviceId)
 	// Output:
 	// Mobile User-Agent: Mozilla/5.0 (iPhone; CPU iPhone OS 7_1 like Mac OS X) AppleWebKit/537.51.2 (KHTML, like Gecko) Version/7.0 Mobile/11D167 Safari/9537.53
 	// 	IsMobile: True

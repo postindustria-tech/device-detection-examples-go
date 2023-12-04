@@ -20,7 +20,7 @@
  * such notice(s) shall fulfill the requirements of that article.
  * ********************************************************************* */
 
-package dd_test
+package main
 
 /*
 TODO: To be implemented
@@ -29,6 +29,6 @@ TODO: To be implemented
 // import "fmt"
 // import "github.com/51Degrees/device-detection-go/ddonpremise"
 
-func Example_strongly_typed() {
+func main() {
 	// TODO: To be implemented
 }
