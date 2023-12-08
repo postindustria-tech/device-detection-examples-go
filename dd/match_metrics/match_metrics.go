@@ -129,7 +129,7 @@ func verifyOutputFormat(matchReport string) string {
 		log.Println(matchReport)
 		log.Fatalln("Output does not match expected.")
 	}
-	return "Match metrics in format:\n" + readableFormat
+	return "Match metrics:\n" + matchReport 
 }
 
 // import "fmt"
