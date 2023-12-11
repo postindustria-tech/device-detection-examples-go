@@ -20,7 +20,7 @@
  * such notice(s) shall fulfill the requirements of that article.
  * ********************************************************************* */
 
-package dd_test
+package main
 
 /*
 This example illustrates how match metrics can be accessed.
@@ -28,6 +28,7 @@ This example illustrates how match metrics can be accessed.
 
 import (
 	"fmt"
+	dd_example "github.com/51Degrees/device-detection-examples-go/v4/dd"
 	"log"
 	"regexp"
 
@@ -128,7 +129,7 @@ func verifyOutputFormat(matchReport string) string {
 		log.Println(matchReport)
 		log.Fatalln("Output does not match expected.")
 	}
-	return "Match metrics in format:\n" + readableFormat
+	return "Match metrics:\n" + matchReport 
 }
 
 // import "fmt"
@@ -138,7 +139,7 @@ func runMatchMetrics(perf dd.PerformanceProfile) string {
 	// Initialise manager
 	manager := dd.NewResourceManager()
 	config := dd.NewConfigHash(perf)
-	filePath := getFilePath([]string{liteDataFile})
+	filePath := dd_example.GetFilePath([]string{dd_example.LiteDataFile})
 
 	err := dd.InitManagerFromFile(
 		manager,
@@ -190,8 +191,8 @@ func runMatchMetrics(perf dd.PerformanceProfile) string {
 	return report
 }
 
-func Example_match_metrics() {
-	performExample(dd.Default, runMatchMetrics)
+func main() {
+	dd_example.PerformExample(dd.Default, runMatchMetrics)
 	// Output:
 	// Mobile User-Agent: Mozilla/5.0 (iPhone; CPU iPhone OS 7_1 like Mac OS X) AppleWebKit/537.51.2 (KHTML, like Gecko) Version/7.0 Mobile/11D167 Safari/9537.53
 	// Match metrics in format:

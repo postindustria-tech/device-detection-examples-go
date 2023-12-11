@@ -20,7 +20,7 @@
  * such notice(s) shall fulfill the requirements of that article.
  * ********************************************************************* */
 
-package dd_test
+package main
 
 /*
 This example illustrates the performance of 51Degrees device detection solution.
@@ -47,6 +47,7 @@ Number of CPUs: 2
 import ( //	"runtime"
 	"bufio"
 	"fmt"
+	dd_example "github.com/51Degrees/device-detection-examples-go/v4/dd"
 	"log"
 	"os"
 	"path/filepath"
@@ -123,7 +124,7 @@ func performDetections(
 	// Create a wait group
 	var wg sync.WaitGroup
 
-	rep.uaCount = countUAFromFiles(uaFilePath)
+	rep.uaCount = dd_example.CountUAFromFiles(uaFilePath)
 	rep.uaCount *= iterationCount
 
 	for i := 0; i < iterationCount; i++ {
@@ -253,8 +254,8 @@ func run(
 // Setup all configuration settings required for running this example.
 // Run the example.
 func runPerformance(perf dd.PerformanceProfile) string {
-	dataFilePath := getFilePath([]string{liteDataFile})
-	uaFilePath := getFilePath([]string{uaFile})
+	dataFilePath := dd_example.GetFilePath([]string{dd_example.LiteDataFile})
+	uaFilePath := dd_example.GetFilePath([]string{dd_example.UaFile})
 
 	// Create Resource Manager
 	manager := dd.NewResourceManager()
@@ -280,8 +281,8 @@ func runPerformance(perf dd.PerformanceProfile) string {
 	return run(manager, uaFilePath)
 }
 
-func Example_performance() {
-	performExample(dd.InMemory, runPerformance)
+func main() {
+	dd_example.PerformExample(dd.InMemory, runPerformance)
 	// The performance is output to a file 'performance_report.log' with content
 	// similar as below:
 	//   Average 0.01510 ms per User-Agent
