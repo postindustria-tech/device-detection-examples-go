@@ -10,34 +10,30 @@ $TestableDirs = (
     [IO.Path]::Combine($RepoName, "web")
 )
 
-function Write-Host-Colored {
+$DarkBlue = 34
+$DarkRed = 31
+
+function Make-Colorful {
     param (
         [Parameter(Mandatory=$true)]
         [string]$Object,
-        [Int16]$ColorCode = 34 #DarkBlue
+        [Int16]$ColorCode = $DarkBlue
     )
-    Write-Host "`e[${ColorCode}m$Object`e[39m"
-}
-function Write-Error-Colored {
-    param (
-        [Parameter(Mandatory=$true)]
-        [string]$Object
-    )
-    Write-Host-Colored "::error::$Object" 31 #DarkRed
+    return "`e[${ColorCode}m$Object`e[39m"
 }
 
 $failures = @()
 
 Push-Location $ExamplesDir
 try {
-    Write-Host-Colored "Collecting Examples..."
+    Write-Host (Make-Colorful "Collecting Examples...")
     $all_examples = Get-ChildItem -Recurse -Include *.go -Exclude $ExamplesExcludeFilter -Name
     foreach ($example_file in $all_examples) {
         Write-Host $example_file
     }
     
     foreach ($example_file in $all_examples) {
-        Write-Host-Colored "Starting '$example_file'..."
+        Write-Host (Make-Colorful "Starting '$example_file'...")
 
         go run $example_file
         $example_exit_code = $LASTEXITCODE
@@ -45,7 +41,7 @@ try {
 
         if ($example_exit_code -ne 0) {
             $failures += [IO.Path]::Combine($ExamplesDir, $example_file)
-            Write-Error-Colored "'$example_file' finished with code $example_exit_code"
+            Write-Host "::error::"(Make-Colorful "'$example_file' finished with code $example_exit_code" $DarkRed)
         }
     }
 } finally {
@@ -64,15 +60,16 @@ foreach ($next_test_dir in $TestableDirs) {
     
     if ($test_exit_code -ne 0) {
         $failures += $next_test_dir
-        Write-Error-Colored "'$next_test_dir' testing finished with code $test_exit_code"
+        Write-Host "::error::"(Make-Colorful "'$next_test_dir' testing finished with code $test_exit_code")
     }
 }
 
 $failures_count = $failures.Length
 if ($failures_count -ne 0) {
-    Write-Host-Colored "Failed ($failures_count):"
+    Write-Host (Make-Colorful "Failed ($failures_count):")
     foreach ($next_failed in $failures) {
-        Write-Host-Colored "- $next_failed" 31 #DarkRed
+        Write-Host (Make-Colorful "- $next_failed" $DarkRed)
     }
+    Write-Host ""
     throw "Failed ($failures_count): $failures"
 }
