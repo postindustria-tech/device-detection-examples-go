@@ -31,16 +31,24 @@ function Add-Color {
 }
 function Build-Exit-Code-Message {
     param (
+        [Parameter(Mandatory=$true)]
         [string]$Location,
-        [Int32]$ExitCode
+        [Parameter(Mandatory=$true)]
+        [Int32]$ExitCode,
+        [bool]$NoColor = $false
     )
+    if ($NoColor) {
+        return "'$Location' finished with code $ExitCode"
+    }
     if ($ExitCode -eq 0) {
         return (Add-Color "'$Location' finished with code $ExitCode" $DarkGreen)
     }
     return "::error::$(Add-Color "'$(Add-Color $Location $DarkYellow)' finished with code $(Add-Color $ExitCode $DarkYellow)" $Red)"
 }
 
-$failures = @()
+$failed_locations = @()
+
+$integrationTestResults = New-Item -ItemType directory -Path ([IO.Path]::Combine($RepoName, "test-results", "integration")) -Force
 
 Push-Location ([IO.Path]::Combine($RepoName, $ExamplesDir))
 try {
@@ -49,30 +57,58 @@ try {
     foreach ($example_file in $all_examples) {
         Write-Host $example_file
     }
+
+    $test_report_xml = New-Object -TypeName System.Xml.XmlDocument
+    $test_suite = $test_report_xml.CreateElement("testsuites")
+    $test_suite.SetAttribute("name", "Examples ($ExamplesDir)")
+    $test_suite.SetAttribute("tests", $all_examples.Length)
     
     foreach ($example_file in $all_examples) {
         Write-Host (Add-Color "Starting '$example_file'...")
 
-        go run $example_file
+        $exec_time = (Measure-Command { 
+            go run $example_file
+        } | Select-Object TotalSeconds).TotalSeconds
         $example_exit_code = $LASTEXITCODE
         Write-Host ""
 
+        $test_case = $test_report_xml.CreateElement("testcase")
+        # $test_case.SetAttribute("classname", $example_file)
+        $test_case.SetAttribute("name", $example_file)
+        $test_case.SetAttribute("time", $exec_time)
+
         if ($example_exit_code -ne 0) {
-            $failures += [IO.Path]::Combine($ExamplesDir, (Add-Color $example_file $DarkYellow))
+            $failed_locations += ([IO.Path]::Combine($ExamplesDir, (Add-Color $example_file $DarkYellow)))
+
+            $test_failure = $test_report_xml.CreateElement("failure")
+            $test_failure.SetAttribute("type", "error")
+            $failure_message = (Build-Exit-Code-Message $example_file $example_exit_code -NoColor $true)
+            $test_failure.SetAttribute("message", $failure_message)
+            $test_failure.InnerText = $failure_message
+            $test_case.AppendChild($test_failure)
         }
         Write-Host (Build-Exit-Code-Message $example_file $example_exit_code)
+        $test_suite.AppendChild($test_case)
     }
+    $test_suite.SetAttribute("failures", $failed_locations.Length)
+    $test_report_xml.AppendChild($test_suite)
 } finally {
     Pop-Location
+    $test_report_xml.Save(([IO.Path]::Combine($integrationTestResults, "examples.xml")))
 }
-
-$integrationTestResults = New-Item -ItemType directory -Path $RepoName/test-results/integration -Force
 
 foreach ($next_test_dir in $TestableDirs) {
     Push-Location ([IO.Path]::Combine($RepoName, $next_test_dir))
     Write-Host (Add-Color "Testing '$next_test_dir'...")
     try {
-        go test | go-junit-report -set-exit-code -iocopy -out $integrationTestResults/$next_test_dir.xml
+        if (Get-Command go-junit-report) {
+            $next_results_file = ([IO.Path]::Combine($integrationTestResults, "$next_test_dir.xml"))
+            go test | go-junit-report -set-exit-code -iocopy -out $next_results_file
+            Write-Host (Add-Color "Dumping report:")
+            Get-Content $next_results_file
+        } else {
+            go test
+        }
         $test_exit_code = $LASTEXITCODE
         Write-Host ""
     } finally {
@@ -80,17 +116,17 @@ foreach ($next_test_dir in $TestableDirs) {
     }
     
     if ($test_exit_code -ne 0) {
-        $failures += (Add-Color $next_test_dir $DarkYellow)
+        $failed_locations += (Add-Color $next_test_dir $DarkYellow)
     }
     Write-Host (Build-Exit-Code-Message $next_test_dir $test_exit_code)
 }
 
-$failures_count = $failures.Length
-if ($failures_count -ne 0) {
-    Write-Host (Add-Color "Failed ($failures_count):")
-    foreach ($next_failed in $failures) {
+$failed_locations_count = $failed_locations.Length
+if ($failed_locations_count -ne 0) {
+    Write-Host (Add-Color "Failed ($failed_locations_count):")
+    foreach ($next_failed in $failed_locations) {
         Write-Host (Add-Color "- $next_failed" $DarkRed)
     }
     Write-Host ""
-    throw (Add-Color "Failed ($(Add-Color $failures_count $DarkYellow)): $failures" $Red)
+    throw (Add-Color "Failed ($(Add-Color $failed_locations_count $DarkYellow)): $failed_locations" $Red)
 }
