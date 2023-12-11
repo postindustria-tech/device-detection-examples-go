@@ -4,52 +4,71 @@ param (
     [string]$ExamplesExcludeFilter = "example_base.go"
 )
 
-$ExamplesDir = [IO.Path]::Combine($RepoName, $ExamplesDir, "dd")
+$ExamplesDir = "dd"
 $TestableDirs = (
-    [IO.Path]::Combine($RepoName, "uach"), 
-    [IO.Path]::Combine($RepoName, "web")
+    "uach", 
+    "web"
 )
 
-$DarkBlue = 34
 $DarkRed = 31
+$DarkGreen = 32
+$DarkYellow = 33
+$DarkBlue = 34
+$Red = 91
 
-function Make-Colorful {
+function Add-Color {
     param (
         [Parameter(Mandatory=$true)]
         [string]$Object,
         [Int16]$ColorCode = $DarkBlue
     )
-    return "`e[${ColorCode}m$Object`e[39m"
+    $ResetColor = "`e[39m"
+    $ResetColorRegex = "\W*39m"
+    
+    $new_color_code = "`e[${ColorCode}m"
+    $stripped_object = "$Object" -replace "$ResetColorRegex$",'' -replace "$ResetColorRegex",$new_color_code
+    return "$new_color_code$stripped_object$ResetColor"
+}
+function Build-Exit-Code-Message {
+    param (
+        [string]$Location,
+        [Int32]$ExitCode
+    )
+    if ($ExitCode -eq 0) {
+        return (Add-Color "'$Location' finished with code $ExitCode" $DarkGreen)
+    }
+    return "::error::$(Add-Color "'$(Add-Color $Location $DarkYellow)' finished with code $(Add-Color $ExitCode $DarkYellow)" $Red)"
 }
 
 $failures = @()
 
-Push-Location $ExamplesDir
+Push-Location ([IO.Path]::Combine($RepoName, $ExamplesDir))
 try {
-    Write-Host (Make-Colorful "Collecting Examples...")
+    Write-Host (Add-Color "Collecting Examples...")
     $all_examples = Get-ChildItem -Recurse -Include *.go -Exclude $ExamplesExcludeFilter -Name
     foreach ($example_file in $all_examples) {
         Write-Host $example_file
     }
     
     foreach ($example_file in $all_examples) {
-        Write-Host (Make-Colorful "Starting '$example_file'...")
+        Write-Host (Add-Color "Starting '$example_file'...")
 
         go run $example_file
         $example_exit_code = $LASTEXITCODE
         Write-Host ""
 
         if ($example_exit_code -ne 0) {
-            $failures += [IO.Path]::Combine($ExamplesDir, $example_file)
-            Write-Host "::error::"(Make-Colorful "'$example_file' finished with code $example_exit_code" $DarkRed)
+            $failures += [IO.Path]::Combine($ExamplesDir, (Add-Color $example_file $DarkYellow))
         }
+        Write-Host (Build-Exit-Code-Message $example_file $example_exit_code)
     }
 } finally {
     Pop-Location
 }
 
 foreach ($next_test_dir in $TestableDirs) {
-    Push-Location $next_test_dir
+    Push-Location ([IO.Path]::Combine($RepoName, $next_test_dir))
+    Write-Host (Add-Color "Testing '$next_test_dir'...")
     try {
         go test
         $test_exit_code = $LASTEXITCODE
@@ -60,16 +79,16 @@ foreach ($next_test_dir in $TestableDirs) {
     
     if ($test_exit_code -ne 0) {
         $failures += $next_test_dir
-        Write-Host "::error::"(Make-Colorful "'$next_test_dir' testing finished with code $test_exit_code")
     }
+    Write-Host (Build-Exit-Code-Message $next_test_dir $test_exit_code)
 }
 
 $failures_count = $failures.Length
 if ($failures_count -ne 0) {
-    Write-Host (Make-Colorful "Failed ($failures_count):")
+    Write-Host (Add-Color "Failed ($failures_count):")
     foreach ($next_failed in $failures) {
-        Write-Host (Make-Colorful "- $next_failed" $DarkRed)
+        Write-Host (Add-Color "- $next_failed" $DarkRed)
     }
     Write-Host ""
-    throw "Failed ($failures_count): $failures"
+    throw (Add-Color "Failed ($(Add-Color $failures_count $DarkYellow)): $failures" $Red)
 }
