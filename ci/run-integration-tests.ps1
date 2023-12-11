@@ -66,11 +66,13 @@ try {
     Pop-Location
 }
 
+$integrationTestResults = New-Item -ItemType directory -Path $RepoName/test-results/integration -Force
+
 foreach ($next_test_dir in $TestableDirs) {
     Push-Location ([IO.Path]::Combine($RepoName, $next_test_dir))
     Write-Host (Add-Color "Testing '$next_test_dir'...")
     try {
-        go test
+        go test | go-junit-report -set-exit-code -iocopy -out $integrationTestResults/$next_test_dir.xml
         $test_exit_code = $LASTEXITCODE
         Write-Host ""
     } finally {
