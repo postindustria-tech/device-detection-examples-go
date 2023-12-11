@@ -1,6 +1,8 @@
 param (
     [Parameter(Mandatory=$true)]
     [string]$RepoName,
+    [Parameter(Mandatory=$true)]
+    [string]$OrgName,
     [string]$ExamplesExcludeFilter = "example_base.go"
 )
 
@@ -58,9 +60,10 @@ try {
         Write-Host $example_file
     }
 
+    $example_class_name = "github.com/$OrgName/$RepoName/$ExamplesDir"
     $test_report_xml = New-Object -TypeName System.Xml.XmlDocument
     $test_suite = $test_report_xml.CreateElement("testsuite")
-    $test_suite.SetAttribute("name", "Examples ($ExamplesDir)")
+    $test_suite.SetAttribute("name", $example_class_name)
     $test_suite.SetAttribute("tests", $all_examples.Length)
 
     $total_examples_time = 0
@@ -78,7 +81,7 @@ try {
         Write-Host (Build-Exit-Code-Message $example_file $example_exit_code)
 
         $test_case = $test_report_xml.CreateElement("testcase")
-        # $test_case.SetAttribute("classname", $example_file)
+        $test_case.SetAttribute("classname", $example_class_name)
         $test_case.SetAttribute("name", $example_file)
         $test_case.SetAttribute("time", $exec_time)
 
