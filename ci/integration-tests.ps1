@@ -29,12 +29,12 @@ try {
         go run $example_file
         $example_exit_code = $LASTEXITCODE
 
+        Write-Host "::endgroup::" -ForegroundColor $GroupMarkerColor
+
         if ($example_exit_code -ne 0) {
             $failures += [IO.Path]::Combine($ExamplesDir, $example_file)
-            Write-Host ""
             Write-Host "::error::'$example_file' finished with code $example_exit_code" -ForegroundColor "DarkRed"
         }
-        Write-Host "::endgroup::" -ForegroundColor $GroupMarkerColor
     }
 } finally {
     Write-Host "::endgroup::" -ForegroundColor $GroupMarkerColor
@@ -49,15 +49,14 @@ foreach ($next_test_dir in $TestableDirs) {
     try {
         go test
         $test_exit_code = $LASTEXITCODE
-
-        if ($test_exit_code -ne 0) {
-            $failures += $next_test_dir
-            Write-Host ""
-            Write-Host "::error::'$next_test_dir' testing finished with code $test_exit_code" -ForegroundColor "DarkRed"
-        }
     } finally {
         Write-Host "::endgroup::" -ForegroundColor $GroupMarkerColor
         Pop-Location
+    }
+    
+    if ($test_exit_code -ne 0) {
+        $failures += $next_test_dir
+        Write-Host "::error::'$next_test_dir' testing finished with code $test_exit_code" -ForegroundColor "DarkRed"
     }
 }
 
