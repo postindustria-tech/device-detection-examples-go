@@ -71,10 +71,6 @@ if ($failures_count -ne 0) {
     foreach ($next_failed in $failures) {
         Write-Host "- $next_failed" -ForegroundColor "DarkRed"
     }
-    try {
-        throw "Failed: $failures_count"
-    } finally {
-        Write-Host "::endgroup::" -ForegroundColor $GroupMarkerColor
-    }
+    throw "Failed ($failures_count): $failures"
 }
 
