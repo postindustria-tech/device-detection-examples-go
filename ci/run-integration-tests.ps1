@@ -59,9 +59,11 @@ try {
     }
 
     $test_report_xml = New-Object -TypeName System.Xml.XmlDocument
-    $test_suite = $test_report_xml.CreateElement("testsuites")
+    $test_suite = $test_report_xml.CreateElement("testsuite")
     $test_suite.SetAttribute("name", "Examples ($ExamplesDir)")
     $test_suite.SetAttribute("tests", $all_examples.Length)
+
+    $total_examples_time = 0
     
     foreach ($example_file in $all_examples) {
         Write-Host (Add-Color "Starting '$example_file'...")
@@ -70,7 +72,10 @@ try {
             go run $example_file
         } | Select-Object TotalSeconds).TotalSeconds
         $example_exit_code = $LASTEXITCODE
+        $total_examples_time += $exec_time
+
         Write-Host ""
+        Write-Host (Build-Exit-Code-Message $example_file $example_exit_code)
 
         $test_case = $test_report_xml.CreateElement("testcase")
         # $test_case.SetAttribute("classname", $example_file)
@@ -87,10 +92,10 @@ try {
             $test_failure.InnerText = $failure_message
             $test_case.AppendChild($test_failure)
         }
-        Write-Host (Build-Exit-Code-Message $example_file $example_exit_code)
         $test_suite.AppendChild($test_case)
     }
     $test_suite.SetAttribute("failures", $failed_locations.Length)
+    $test_suite.SetAttribute("time", $total_examples_time)
     $test_report_xml.AppendChild($test_suite)
 } finally {
     Pop-Location
@@ -103,7 +108,7 @@ foreach ($next_test_dir in $TestableDirs) {
     try {
         if (Get-Command go-junit-report) {
             $next_results_file = ([IO.Path]::Combine($integrationTestResults, "$next_test_dir.xml"))
-            go test | go-junit-report -set-exit-code -iocopy -out $next_results_file
+            go test -v 2>&1 | go-junit-report -set-exit-code -iocopy -out $next_results_file
             Write-Host (Add-Color "Dumping report:")
             Get-Content $next_results_file
         } else {
