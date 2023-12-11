@@ -78,7 +78,7 @@ foreach ($next_test_dir in $TestableDirs) {
     }
     
     if ($test_exit_code -ne 0) {
-        $failures += $next_test_dir
+        $failures += (Add-Color $next_test_dir $DarkYellow)
     }
     Write-Host (Build-Exit-Code-Message $next_test_dir $test_exit_code)
 }
