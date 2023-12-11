@@ -67,7 +67,7 @@ foreach ($next_test_dir in $TestableDirs) {
 
 $failures_count = $failures.Length
 if ($failures_count -ne 0) {
-    Write-Host "::group::List Failures" -ForegroundColor $GroupMarkerColor
+    Write-Host "Failed ($failures_count):" -ForegroundColor $GroupMarkerColor
     foreach ($next_failed in $failures) {
         Write-Host "- $next_failed" -ForegroundColor "DarkRed"
     }
