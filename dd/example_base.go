@@ -20,7 +20,7 @@
  * such notice(s) shall fulfill the requirements of that article.
  * ********************************************************************* */
 
-package dd_test
+package dd_example
 
 /*
 This example illustrates how to perform simple device detections on given
@@ -38,15 +38,15 @@ import (
 )
 
 // Constants
-const liteDataFile = "51Degrees-LiteV4.1.hash"
-const enterpriseDataFile = "Enterprise-HashV41.hash"
-const uaFile = "20000 User Agents.csv"
+const LiteDataFile = "51Degrees-LiteV4.1.hash"
+const EnterpriseDataFile = "Enterprise-HashV41.hash"
+const UaFile = "20000 User Agents.csv"
 
 // Type take a performance profile, run the code and get the return output
 type ExampleFunc func(p dd.PerformanceProfile) string
 
 // Returns a full path to a file to be used for examples
-func getFilePath(names []string) string {
+func GetFilePath(names []string) string {
 	filePath, err := dd.GetFilePath(
 		"..",
 		names,
@@ -71,7 +71,7 @@ func isFlagOn(value string) bool {
 
 // Count the number of User-Agents in a User-Agents file and return the number
 // of user agents found.
-func countUAFromFiles(
+func CountUAFromFiles(
 	uaFilePath string) uint64 {
 	var count uint64 = 0
 	// Count the number of User Agents
@@ -103,7 +103,7 @@ func countUAFromFiles(
 // This is a wrapper function which execute a function that contains
 // example code with an input performance profile or all performance
 // profiles if performed under CI.
-func performExample(perf dd.PerformanceProfile, eFunc ExampleFunc) {
+func PerformExample(perf dd.PerformanceProfile, eFunc ExampleFunc) {
 	perfs := []dd.PerformanceProfile{perf}
 	// If running under ci, use all performance profiles
 	if isFlagOn("ci") {

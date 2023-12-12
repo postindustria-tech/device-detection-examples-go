@@ -20,7 +20,7 @@
  * such notice(s) shall fulfill the requirements of that article.
  * ********************************************************************* */
 
-package dd_test
+package main
 
 /*
  This example illustrates how to perform simple device detections using
@@ -29,6 +29,7 @@ package dd_test
 
 import (
 	"fmt"
+	dd_example "github.com/51Degrees/device-detection-examples-go/v4/dd"
 	"log"
 
 	"github.com/51Degrees/device-detection-go/v4/dd"
@@ -91,7 +92,7 @@ func runMatchDeviceId(perf dd.PerformanceProfile) string {
 	// Initialise manager
 	manager := dd.NewResourceManager()
 	config := dd.NewConfigHash(perf)
-	filePath := getFilePath([]string{liteDataFile})
+	filePath := dd_example.GetFilePath([]string{dd_example.LiteDataFile})
 
 	err := dd.InitManagerFromFile(
 		manager,
@@ -149,13 +150,18 @@ func runMatchDeviceId(perf dd.PerformanceProfile) string {
 	expected += "MediaHub User-Agent: Mozilla/5.0 (Linux; Android 4.4.2; X7 Quad Core Build/KOT49H) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/30.0.0.0 Safari/537.36\n"
 	expected += "\tIsMobile: False\n"
 	if actual != expected {
-		log.Fatalln("Output is not as expected.")
+		log.Println("Expected:")
+		log.Println(expected)
+		log.Println("")
+		log.Println("Actual:")
+		log.Println(actual)
+		log.Fatalln("Output does not match expected.")
 	}
 	return actual
 }
 
-func Example_match_device_id() {
-	performExample(dd.Default, runMatchDeviceId)
+func main() {
+	dd_example.PerformExample(dd.Default, runMatchDeviceId)
 	// Output:
 	// Mobile User-Agent: Mozilla/5.0 (iPhone; CPU iPhone OS 7_1 like Mac OS X) AppleWebKit/537.51.2 (KHTML, like Gecko) Version/7.0 Mobile/11D167 Safari/9537.53
 	// 	IsMobile: True
