@@ -1,2 +1,2 @@
-github.com/51Degrees/device-detection-go/v4 v4.4.6-0.20240131021631-fbdb95969713 h1:SIpx1U5iz8azQ5FiCJwpifSuszzaqcs0Wav+d/zai90=
-github.com/51Degrees/device-detection-go/v4 v4.4.6-0.20240131021631-fbdb95969713/go.mod h1:T4ReXO9sGjoGJKct7L8GCfJwoPQkDv3EeIN3NpB27+8=
+github.com/51Degrees/device-detection-go/v4 v4.4.10 h1:Rwa7GPNIBHdpHbt7NQzD77e+BHoB21xaoWCF+uwO5U4=
+github.com/51Degrees/device-detection-go/v4 v4.4.10/go.mod h1:T4ReXO9sGjoGJKct7L8GCfJwoPQkDv3EeIN3NpB27+8=
