@@ -59,6 +59,14 @@ import (
 type Page struct {
 	BrowserName       string
 	ScreenPixelsWidth string
+
+	DeviceType         string
+	HardwareVendor     string
+	HardwareName       string
+	PlatformName       string
+	PlatformVersion    string
+	ScreenPixelsHeight string
+	DeviceId           string
 }
 
 var manager *dd.ResourceManager
@@ -74,6 +82,14 @@ var templ = `<!DOCTYPE HTML>
   <body>
     <p id=browsername>Browser: <b>{{.BrowserName}}</b></p>
     <p id=screenpixelswidth>Screen Pixels Width: <b>{{.ScreenPixelsWidth}}</b></p>
+    <p id=screenpixelswidth>DeviceType: <b>{{.DeviceType}}</b></p>
+    <p id=screenpixelswidth>HardwareVendor: <b>{{.HardwareVendor}}</b></p>
+    <p id=screenpixelswidth>HardwareName: <b>{{.HardwareName}}</b></p>
+    <p id=screenpixelswidth>PlatformName: <b>{{.PlatformName}}</b></p>
+    <p id=screenpixelswidth>PlatformVersion: <b>{{.PlatformVersion}}</b></p>
+    <p id=screenpixelswidth>ScreenPixelsHeight: <b>{{.ScreenPixelsHeight}}</b></p>
+    <p id=screenpixelswidth>ScreenPixelsWidth: <b>{{.ScreenPixelsWidth}}</b></p>
+	<p id=deviceid>DeviceId: <b>{{.DeviceId}}</b></p>
   </body>
 </html>`
 
@@ -94,9 +110,11 @@ func getValue(
 	results *dd.ResultsHash,
 	propertyName string) string {
 	// Get the values in string
+
 	value, err := results.ValuesString(
 		propertyName,
-		",")
+		",",
+	)
 	if err != nil {
 		log.Fatalln("ERROR: Failed to get results values string.")
 	}
@@ -105,7 +123,8 @@ func getValue(
 	if err != nil {
 		log.Fatalf(
 			"ERROR: Failed to check if a matched value exists for property "+
-				"%s.\n", propertyName)
+				"%s.\n", propertyName,
+		)
 	}
 
 	if !hasValues {
@@ -131,6 +150,13 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	p := &Page{
 		browserName,
 		screenPixelWidth,
+		getValue(results, "DeviceType"),
+		getValue(results, "HardwareVendor"),
+		getValue(results, "HardwareName"),
+		getValue(results, "PlatformName"),
+		getValue(results, "PlatformVersion"),
+		getValue(results, "ScreenPixelsHeight"),
+		getValue(results, "DeviceId"),
 	}
 
 	// Construct the template
@@ -146,17 +172,21 @@ func main() {
 	fileNames := []string{"51Degrees-LiteV4.1.hash"}
 	filePath, err := dd.GetFilePath(
 		"..",
-		fileNames)
+		fileNames,
+	)
 	if err != nil {
-		log.Fatalf("Could not find any file that matches any of \"%s\".\n",
-			strings.Join(fileNames, ", "))
+		log.Fatalf(
+			"Could not find any file that matches any of \"%s\".\n",
+			strings.Join(fileNames, ", "),
+		)
 	}
 	// Init manager
 	err = dd.InitManagerFromFile(
 		manager,
 		*config,
 		"",
-		filePath)
+		filePath,
+	)
 	if err != nil {
 		log.Fatalln("ERROR: Failed to initialize resource manager.")
 	}
