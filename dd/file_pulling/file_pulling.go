@@ -27,6 +27,10 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to run pipeline: %v", err)
 	}
+
+	resultsHash := pl.NewResultsHash(0, 1)
+	//use results and do detection
+	resultsHash.Free()
 	<-make(chan struct{})
 
 	defer manager.Free()
