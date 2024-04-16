@@ -28,9 +28,10 @@ This example illustrates how match metrics can be accessed.
 
 import (
 	"fmt"
-	dd_example "github.com/51Degrees/device-detection-examples-go/v4/dd"
 	"log"
 	"regexp"
+
+	dd_example "github.com/51Degrees/device-detection-examples-go/v4/dd"
 
 	"github.com/51Degrees/device-detection-go/v4/dd"
 )
@@ -135,11 +136,11 @@ func verifyOutputFormat(matchReport string) string {
 // import "fmt"
 // import "github.com/51Degrees/device-detection-go/ddonpremise"
 
-func runMatchMetrics(perf dd.PerformanceProfile) string {
+func runMatchMetrics(perf dd.PerformanceProfile, options dd_example.Options) string {
 	// Initialise manager
 	manager := dd.NewResourceManager()
 	config := dd.NewConfigHash(perf)
-	filePath := dd_example.GetFilePath([]string{dd_example.LiteDataFile})
+	filePath := dd_example.GetFilePath(options.DataFilePath, []string{dd_example.LiteDataFile})
 
 	err := dd.InitManagerFromFile(
 		manager,

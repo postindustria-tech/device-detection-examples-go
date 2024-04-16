@@ -29,6 +29,7 @@ User-Agent strings.
 
 import (
 	"bufio"
+	"flag"
 	"fmt"
 	"log"
 	"os"
@@ -43,17 +44,18 @@ const EnterpriseDataFile = "Enterprise-HashV41.hash"
 const UaFile = "20000 User Agents.csv"
 
 // Type take a performance profile, run the code and get the return output
-type ExampleFunc func(p dd.PerformanceProfile) string
+type ExampleFunc func(p dd.PerformanceProfile, o Options) string
 
 // Returns a full path to a file to be used for examples
-func GetFilePath(names []string) string {
+func GetFilePath(dir string, names []string) string {
 	filePath, err := dd.GetFilePath(
-		"..",
+		dir,
 		names,
 	)
 	if err != nil {
-		log.Fatalf("Could not find any file that matches any of \"%s\".\n",
-			strings.Join(names, ", "))
+		log.Fatalf("Could not find any file that matches any of \"%s\" at path \"%s\".\n",
+			strings.Join(names, ", "),
+			dir)
 	}
 	return filePath
 }
@@ -104,6 +106,13 @@ func CountUAFromFiles(
 // example code with an input performance profile or all performance
 // profiles if performed under CI.
 func PerformExample(perf dd.PerformanceProfile, eFunc ExampleFunc) {
+	// Get command line options
+	options := ParseOptions()
+	if options.showHelp {
+		flag.Usage()
+		return
+	}
+
 	perfs := []dd.PerformanceProfile{perf}
 	// If running under ci, use all performance profiles
 	if isFlagOn("ci") {
@@ -116,13 +125,44 @@ func PerformExample(perf dd.PerformanceProfile, eFunc ExampleFunc) {
 			dd.InMemory,
 		}
 	}
+
 	// Execute the example function with all performance profiles
 	for i, p := range perfs {
-		output := eFunc(p)
+		output := eFunc(p, options)
 		// This is to support example Output verification
 		// so only print once.
 		if i == 0 {
 			fmt.Print(output)
 		}
 	}
+}
+
+type Options struct {
+	DataFilePath     string
+	EvidenceFilePath string
+	LogOutputPath    string
+	Iterations       uint64
+	showHelp         bool
+}
+
+func ParseOptions() Options {
+	options := Options{}
+
+	flag.StringVar(&options.DataFilePath, "data-file", "..", "Path to a 51Degrees Hash data file")
+	flag.StringVar(&options.DataFilePath, "d", options.DataFilePath, "Alias for -data-file")
+
+	flag.StringVar(&options.EvidenceFilePath, "user-agent-file", "..", "Path to a User-Agents CSV file")
+	flag.StringVar(&options.EvidenceFilePath, "u", options.DataFilePath, "Alias for -user-agent-file")
+
+	flag.StringVar(&options.LogOutputPath, "log-output", "", "Path to a output log file")
+	flag.StringVar(&options.LogOutputPath, "l", options.LogOutputPath, "Alias for -log-output")
+
+	flag.Uint64Var(&options.Iterations, "iterations", 4, "Number of iterations")
+	flag.Uint64Var(&options.Iterations, "i", options.Iterations, "Alias for -iterations")
+
+	flag.BoolVar(&options.showHelp, "help", false, "Print help")
+	flag.BoolVar(&options.showHelp, "h", options.showHelp, "Alias for -help")
+
+	flag.Parse()
+	return options
 }

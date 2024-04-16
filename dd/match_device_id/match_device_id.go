@@ -29,8 +29,9 @@ package main
 
 import (
 	"fmt"
-	dd_example "github.com/51Degrees/device-detection-examples-go/v4/dd"
 	"log"
+
+	dd_example "github.com/51Degrees/device-detection-examples-go/v4/dd"
 
 	"github.com/51Degrees/device-detection-go/v4/dd"
 )
@@ -88,11 +89,11 @@ func matchDeviceId(
 	return returnStr
 }
 
-func runMatchDeviceId(perf dd.PerformanceProfile) string {
+func runMatchDeviceId(perf dd.PerformanceProfile, options dd_example.Options) string {
 	// Initialise manager
 	manager := dd.NewResourceManager()
 	config := dd.NewConfigHash(perf)
-	filePath := dd_example.GetFilePath([]string{dd_example.LiteDataFile})
+	filePath := dd_example.GetFilePath(options.DataFilePath, []string{dd_example.LiteDataFile})
 
 	err := dd.InitManagerFromFile(
 		manager,

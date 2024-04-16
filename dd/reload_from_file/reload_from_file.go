@@ -28,7 +28,6 @@ Illustrates how dataset can be reloaded while detections are performed.
 
 import (
 	"bufio"
-	dd_example "github.com/51Degrees/device-detection-examples-go/v4/dd"
 	"hash/fnv"
 	"log"
 	"os"
@@ -36,6 +35,8 @@ import (
 	"sync"
 	"sync/atomic"
 	"time"
+
+	dd_example "github.com/51Degrees/device-detection-examples-go/v4/dd"
 
 	"github.com/51Degrees/device-detection-go/v4/dd"
 )
@@ -195,9 +196,9 @@ func runReloadFromFileSub(
 	return "Program execution complete."
 }
 
-func runReloadFromFile(perf dd.PerformanceProfile) string {
-	dataFilePath := dd_example.GetFilePath([]string{dd_example.LiteDataFile})
-	uaFilePath := dd_example.GetFilePath([]string{dd_example.UaFile})
+func runReloadFromFile(perf dd.PerformanceProfile, options dd_example.Options) string {
+	dataFilePath := dd_example.GetFilePath(options.DataFilePath, []string{dd_example.LiteDataFile})
+	uaFilePath := dd_example.GetFilePath(options.EvidenceFilePath, []string{dd_example.UaFile})
 
 	// Create Resource Manager
 	manager := dd.NewResourceManager()

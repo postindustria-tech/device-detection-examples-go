@@ -47,7 +47,6 @@ Number of CPUs: 2
 import ( //	"runtime"
 	"bufio"
 	"fmt"
-	dd_example "github.com/51Degrees/device-detection-examples-go/v4/dd"
 	"log"
 	"os"
 	"path/filepath"
@@ -57,15 +56,13 @@ import ( //	"runtime"
 	"sync/atomic"
 	"time"
 
+	dd_example "github.com/51Degrees/device-detection-examples-go/v4/dd"
+
 	"github.com/51Degrees/device-detection-go/v4/dd"
 )
 
 // File to output the performance report
 const reportFile = "performance_report.log"
-
-// Number of iterations to perform over the User-Agents.
-// The higher the number is the more accurate the report.
-const iterationCount = 4
 
 // Report struct for each performance run
 type report struct {
@@ -118,16 +115,17 @@ func matchUserAgent(
 // User-Agent. Record the processing time and update a report statistic.
 func performDetections(
 	manager *dd.ResourceManager,
-	uaFilePath string,
+	options dd_example.Options,
 	calibration bool,
 	rep *report) {
 	// Create a wait group
 	var wg sync.WaitGroup
+	uaFilePath := dd_example.GetFilePath(options.EvidenceFilePath, []string{dd_example.UaFile})
 
 	rep.uaCount = dd_example.CountUAFromFiles(uaFilePath)
-	rep.uaCount *= iterationCount
+	rep.uaCount *= options.Iterations
 
-	for i := 0; i < iterationCount; i++ {
+	for i := 0; i < int(options.Iterations); i++ {
 		// Loop through the User-Agent file
 		file, err := os.OpenFile(uaFilePath, os.O_RDONLY, 0444)
 		if err != nil {
@@ -170,23 +168,24 @@ func checkWriteError(err error) {
 }
 
 // Print report to a report file and return output message.
-func printReport(caliR *report, actR *report) string {
-	// Get base path
-	basePath, err := os.Getwd()
-	if err != nil {
-		log.Fatalln("Failed to get current directory.")
-	}
-	reportFilePath := basePath + "/" + reportFile
+func printReport(caliR *report, actR *report, logOutputPath string) string {
 	// Get relative output path for testing
-	relReportFilePath, err := filepath.Rel(basePath, reportFilePath)
-	if err != nil {
-		log.Fatalln("Failed to get relative output file path.")
+	var path string
+	if filepath.IsAbs(logOutputPath) {
+		path = logOutputPath
+	} else {
+		rootDir, e := os.Getwd()
+		if e != nil {
+			log.Fatalln("Failed to get current directory.")
+		}
+		path = filepath.Join(rootDir, logOutputPath)
 	}
+	path = filepath.Join(logOutputPath, reportFile)
 
 	// Create a report file
-	f, err := os.Create(reportFilePath)
+	f, err := os.Create(path)
 	if err != nil {
-		log.Fatalf("ERROR: Failed to create report file \"%s\".", reportFilePath)
+		log.Fatalf("ERROR: Failed to create report file \"%s\".", path)
 	}
 	defer f.Close()
 
@@ -214,7 +213,7 @@ func printReport(caliR *report, actR *report) string {
 	_, err = fmt.Fprintf(w, "Number of CPUs: %d\n", runtime.NumCPU())
 	checkWriteError(err)
 	w.Flush()
-	return fmt.Sprintf("Output report to file \"%s\".\n", relReportFilePath)
+	return fmt.Sprintf("Output report to file \"%s\".\n", reportFile)
 }
 
 // Run the performance example. Performs two phase: calibration and actual
@@ -222,11 +221,11 @@ func printReport(caliR *report, actR *report) string {
 // processing time per detection. Return output messages.
 func run(
 	manager *dd.ResourceManager,
-	uaFilePath string) string {
+	options dd_example.Options) string {
 	// Calibration
 	caliReport := report{0, 0, 0, 0}
 	start := time.Now()
-	performDetections(manager, uaFilePath, true, &caliReport)
+	performDetections(manager, options, true, &caliReport)
 	end := time.Now()
 	caliTime := end.Sub(start)
 	caliReport.processingTime = caliTime.Milliseconds()
@@ -238,7 +237,7 @@ func run(
 	// Action
 	actReport := report{0, 0, 0, 0}
 	start = time.Now()
-	performDetections(manager, uaFilePath, false, &actReport)
+	performDetections(manager, options, false, &actReport)
 	end = time.Now()
 	actTime := end.Sub(start)
 	actReport.processingTime = actTime.Milliseconds()
@@ -248,14 +247,13 @@ func run(
 	}
 
 	// Print the final performance report
-	return printReport(&caliReport, &actReport)
+	return printReport(&caliReport, &actReport, options.LogOutputPath)
 }
 
 // Setup all configuration settings required for running this example.
 // Run the example.
-func runPerformance(perf dd.PerformanceProfile) string {
-	dataFilePath := dd_example.GetFilePath([]string{dd_example.LiteDataFile})
-	uaFilePath := dd_example.GetFilePath([]string{dd_example.UaFile})
+func runPerformance(perf dd.PerformanceProfile, options dd_example.Options) string {
+	dataFilePath := dd_example.GetFilePath(options.DataFilePath, []string{dd_example.LiteDataFile})
 
 	// Create Resource Manager
 	manager := dd.NewResourceManager()
@@ -278,7 +276,7 @@ func runPerformance(perf dd.PerformanceProfile) string {
 	defer manager.Free()
 
 	// Run the performance tests
-	return run(manager, uaFilePath)
+	return run(manager, options)
 }
 
 func main() {

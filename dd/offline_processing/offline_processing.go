@@ -45,12 +45,13 @@ available properties for each User-Agent.
 import (
 	"bufio"
 	"fmt"
-	dd_example "github.com/51Degrees/device-detection-examples-go/v4/dd"
 	"io"
 	"log"
 	"os"
 	"path/filepath"
 	"strings"
+
+	dd_example "github.com/51Degrees/device-detection-examples-go/v4/dd"
 
 	"github.com/51Degrees/device-detection-go/v4/dd"
 )
@@ -162,12 +163,12 @@ func process(
 	}
 }
 
-func runOfflineProcessing(perf dd.PerformanceProfile) string {
+func runOfflineProcessing(perf dd.PerformanceProfile, options dd_example.Options) string {
 	// Initialise manager
 	manager := dd.NewResourceManager()
 	config := dd.NewConfigHash(perf)
-	filePath := dd_example.GetFilePath([]string{dd_example.LiteDataFile})
-	uaFilePath := dd_example.GetFilePath([]string{dd_example.UaFile})
+	filePath := dd_example.GetFilePath(options.DataFilePath, []string{dd_example.LiteDataFile})
+	uaFilePath := dd_example.GetFilePath(options.EvidenceFilePath, []string{dd_example.UaFile})
 	uaDir := filepath.Dir(uaFilePath)
 	uaBase := strings.TrimSuffix(filepath.Base(uaFilePath), filepath.Ext(uaFilePath))
 	outputFilePath := fmt.Sprintf("%s/%s.processed.csv", uaDir, uaBase)
