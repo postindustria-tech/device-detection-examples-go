@@ -53,6 +53,34 @@ browser, err := resultsHash.ValuesString("BrowserName", ",")
  defer resultsHash.Free()
 ```
 
+### Options
+
+#### WithDataUpdateUrl Provides existing datafile
+* path - path to the datafile
+```go
+    WithDataFile(path string) EngineOptions
+```
+
+#### WithDataUpdateUrl Provides datafile update url
+* url - url to the datafile
+* interval - interval in milliseconds for fetching the datafile
+```go
+    WithDataUpdateUrl(url string, interval int) EngineOptions
+```
+
+#### ToggleLogger Enables or disables logger
+* enable - true or false
+```go
+    ToggleLogger(enabled bool) EngineOptions
+```
+
+####WithCustomLogger Provides custom logger
+* logger - custom logger
+  * Logger muster implement LogWriter interface
+```go
+    WithCustomLogger(logger LogWriter) EngineOptions
+```
+
 
 
 
