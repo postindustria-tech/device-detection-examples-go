@@ -11,11 +11,11 @@ func main() {
 	config := dd.NewConfigHash(dd.Balanced)
 
 	//Create on-premise engine
-	pl, err := onpremise.New(
+	engine, err := onpremise.New(
 		config,
 		onpremise.WithDataUpdateUrl(
 			"https://myprovider.com/1.tar.gz",
-			30000,
+			3,
 		),
 	)
 
@@ -24,7 +24,7 @@ func main() {
 	}
 
 	//Process evidence
-	resultsHash, err := pl.Process(
+	resultsHash, err := engine.Process(
 		[]onpremise.Evidence{
 			{
 				Prefix: dd.HttpHeaderString,
@@ -87,5 +87,5 @@ func main() {
 	resultsHash.Free()
 	<-make(chan struct{})
 
-	pl.Stop()
+	engine.Stop()
 }

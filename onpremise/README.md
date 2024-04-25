@@ -1,6 +1,6 @@
 ## onpremise Engine
 
-This example demonstrates how to use the on-premise engine to detect devices.
+This example demonstrates how to use the 51degrees onpremise engine to detect devices.
 
 
 
@@ -13,7 +13,7 @@ This example demonstrates how to use the on-premise engine to detect devices.
 
 #### Create engine
 ```go
-    e, err := New(
+    engine, err := New(
                 config,
                 WithDataUpdateUrl("datafileUrl.com/myFile.gz", 2000),
 				WithDataFile("51Degrees-LiteV4.1.hash"),
@@ -22,7 +22,7 @@ This example demonstrates how to use the on-premise engine to detect devices.
 
 #### Process
 ```go
-resultsHash, err := e.Process(
+resultsHash, err := engine.Process(
         []Evidence{
 			{
 				Prefix: dd.HttpHeaderString, 
@@ -56,16 +56,26 @@ browser, err := resultsHash.ValuesString("BrowserName", ",")
 ### Options
 
 #### WithDataUpdateUrl Provides existing datafile
-* path - path to the datafile
+* path - path to the datafile in case you stored it locally
 ```go
     WithDataFile(path string) EngineOptions
 ```
 
 #### WithDataUpdateUrl Provides datafile update url
+use this in case you have your own datafile source url and want to update it.
+you can see example in updatedatafile.go
 * url - url to the datafile
-* interval - interval in milliseconds for fetching the datafile
+* interval - interval in seconds for fetching the datafile
 ```go
     WithDataUpdateUrl(url string, interval int) EngineOptions
+```
+
+####SetLicenceKey
+in case you use default 51degrees datafile provider you need to set licence key and product
+you can see example in defaultprovider.go
+```go
+   SetLicenceKey(key string) EngineOptions
+   SetProduct(product string) EngineOptions
 ```
 
 #### ToggleLogger Enables or disables logger
@@ -81,6 +91,11 @@ browser, err := resultsHash.ValuesString("BrowserName", ",")
     WithCustomLogger(logger LogWriter) EngineOptions
 ```
 
+####SetMaxRetries
+ enables you to set maximum retries for fetching datafile, default is 0, meaning infinite retries
+```go
+SetMaxRetries(retries int) EngineOptions
+```
 
 
 
