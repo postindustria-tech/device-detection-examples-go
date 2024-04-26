@@ -120,7 +120,7 @@ func performDetections(
 	rep *report) {
 	// Create a wait group
 	var wg sync.WaitGroup
-	uaFilePath := dd_example.GetFilePath(options.EvidenceFilePath, []string{dd_example.UaFile})
+	uaFilePath := dd_example.GetFilePathByPath(options.EvidenceFilePath)
 
 	rep.uaCount = dd_example.CountUAFromFiles(uaFilePath)
 	rep.uaCount *= options.Iterations
@@ -253,7 +253,7 @@ func run(
 // Setup all configuration settings required for running this example.
 // Run the example.
 func runPerformance(perf dd.PerformanceProfile, options dd_example.Options) string {
-	dataFilePath := dd_example.GetFilePath(options.DataFilePath, []string{dd_example.LiteDataFile})
+	dataFilePath := dd_example.GetFilePathByPath(options.DataFilePath)
 
 	// Create Resource Manager
 	manager := dd.NewResourceManager()
@@ -280,7 +280,7 @@ func runPerformance(perf dd.PerformanceProfile, options dd_example.Options) stri
 }
 
 func main() {
-	dd_example.PerformExample(dd.InMemory, runPerformance)
+	dd_example.PerformExampleOptions(dd.InMemory, runPerformance)
 	// The performance is output to a file 'performance_report.log' with content
 	// similar as below:
 	//   Average 0.01510 ms per User-Agent

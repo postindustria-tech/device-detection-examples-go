@@ -196,9 +196,9 @@ func runReloadFromFileSub(
 	return "Program execution complete."
 }
 
-func runReloadFromFile(perf dd.PerformanceProfile, options dd_example.Options) string {
-	dataFilePath := dd_example.GetFilePath(options.DataFilePath, []string{dd_example.LiteDataFile})
-	uaFilePath := dd_example.GetFilePath(options.EvidenceFilePath, []string{dd_example.UaFile})
+func runReloadFromFile(perf dd.PerformanceProfile) string {
+	dataFilePath := dd_example.GetFilePathByName([]string{dd_example.LiteDataFile})
+	uaFilePath := dd_example.GetFilePathByName([]string{dd_example.UaFile})
 
 	// Create Resource Manager
 	manager := dd.NewResourceManager()

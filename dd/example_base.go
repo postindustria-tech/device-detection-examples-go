@@ -33,6 +33,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/51Degrees/device-detection-go/v4/dd"
@@ -44,17 +45,32 @@ const EnterpriseDataFile = "Enterprise-HashV41.hash"
 const UaFile = "20000 User Agents.csv"
 
 // Type take a performance profile, run the code and get the return output
-type ExampleFunc func(p dd.PerformanceProfile, o Options) string
+type ExampleFunc func(p dd.PerformanceProfile) string
+type ExampleOptFunc func(p dd.PerformanceProfile, o Options) string
 
-// Returns a full path to a file to be used for examples
-func GetFilePath(dir string, names []string) string {
+// Returns a full path to a file to be used for examples by file name
+func GetFilePathByName(names []string) string {
 	filePath, err := dd.GetFilePath(
-		dir,
+		"..",
 		names,
 	)
 	if err != nil {
-		log.Fatalf("Could not find any file that matches any of \"%s\" at path \"%s\".\n",
-			strings.Join(names, ", "),
+		log.Fatalf("Could not find any file that matches any of \"%s\".\n",
+			strings.Join(names, ", "))
+	}
+	return filePath
+}
+
+// Returns a full path to a file to be used for examples by path to a file
+func GetFilePathByPath(path string) string {
+	dir, file := filepath.Split(path)
+	filePath, err := dd.GetFilePath(
+		dir,
+		[]string{file},
+	)
+	if err != nil {
+		log.Fatalf("Could not find any file that matches for \"%s\" at path \"%s\".\n",
+			file,
 			dir)
 	}
 	return filePath
@@ -106,6 +122,32 @@ func CountUAFromFiles(
 // example code with an input performance profile or all performance
 // profiles if performed under CI.
 func PerformExample(perf dd.PerformanceProfile, eFunc ExampleFunc) {
+	perfs := []dd.PerformanceProfile{perf}
+	// If running under ci, use all performance profiles
+	if isFlagOn("ci") {
+		perfs = []dd.PerformanceProfile{
+			dd.Default,
+			dd.LowMemory,
+			dd.Balanced,
+			dd.BalancedTemp,
+			dd.HighPerformance,
+			dd.InMemory,
+		}
+	}
+
+	// Execute the example function with all performance profiles
+	for i, p := range perfs {
+		output := eFunc(p)
+		// This is to support example Output verification
+		// so only print once.
+		if i == 0 {
+			fmt.Print(output)
+		}
+	}
+}
+
+// Same as PerformExample with additional support for command line options
+func PerformExampleOptions(perf dd.PerformanceProfile, eFunc ExampleOptFunc) {
 	// Get command line options
 	options := ParseOptions()
 	if options.showHelp {
@@ -148,10 +190,10 @@ type Options struct {
 func ParseOptions() Options {
 	options := Options{}
 
-	flag.StringVar(&options.DataFilePath, "data-file", "..", "Path to a 51Degrees Hash data file")
+	flag.StringVar(&options.DataFilePath, "data-file", "../"+LiteDataFile, "Path to a 51Degrees Hash data file")
 	flag.StringVar(&options.DataFilePath, "d", options.DataFilePath, "Alias for -data-file")
 
-	flag.StringVar(&options.EvidenceFilePath, "user-agent-file", "..", "Path to a User-Agents CSV file")
+	flag.StringVar(&options.EvidenceFilePath, "user-agent-file", "../"+UaFile, "Path to a User-Agents CSV file")
 	flag.StringVar(&options.EvidenceFilePath, "u", options.DataFilePath, "Alias for -user-agent-file")
 
 	flag.StringVar(&options.LogOutputPath, "log-output", "", "Path to a output log file")

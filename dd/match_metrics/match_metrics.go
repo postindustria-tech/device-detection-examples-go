@@ -136,11 +136,11 @@ func verifyOutputFormat(matchReport string) string {
 // import "fmt"
 // import "github.com/51Degrees/device-detection-go/ddonpremise"
 
-func runMatchMetrics(perf dd.PerformanceProfile, options dd_example.Options) string {
+func runMatchMetrics(perf dd.PerformanceProfile) string {
 	// Initialise manager
 	manager := dd.NewResourceManager()
 	config := dd.NewConfigHash(perf)
-	filePath := dd_example.GetFilePath(options.DataFilePath, []string{dd_example.LiteDataFile})
+	filePath := dd_example.GetFilePathByName([]string{dd_example.LiteDataFile})
 
 	err := dd.InitManagerFromFile(
 		manager,

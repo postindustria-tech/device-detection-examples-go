@@ -72,11 +72,11 @@ func match(
 	return returnStr
 }
 
-func runGettingStarted(perf dd.PerformanceProfile, options dd_example.Options) string {
+func runGettingStarted(perf dd.PerformanceProfile) string {
 	// Initialise manager
 	manager := dd.NewResourceManager()
 	config := dd.NewConfigHash(perf)
-	filePath := dd_example.GetFilePath(options.DataFilePath, []string{dd_example.LiteDataFile})
+	filePath := dd_example.GetFilePathByName([]string{dd_example.LiteDataFile})
 
 	err := dd.InitManagerFromFile(
 		manager,
