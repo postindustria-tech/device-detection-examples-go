@@ -69,7 +69,7 @@ func GetFilePathByPath(path string) string {
 		[]string{file},
 	)
 	if err != nil {
-		log.Fatalf("Could not find any file that matches for \"%s\" at path \"%s\".\n",
+		log.Fatalf("Could not find any file that matches \"%s\" at path \"%s\".\n",
 			file,
 			dir)
 	}
@@ -194,7 +194,7 @@ func ParseOptions() Options {
 	flag.StringVar(&options.DataFilePath, "d", options.DataFilePath, "Alias for -data-file")
 
 	flag.StringVar(&options.EvidenceFilePath, "user-agent-file", "../"+UaFile, "Path to a User-Agents CSV file")
-	flag.StringVar(&options.EvidenceFilePath, "u", options.DataFilePath, "Alias for -user-agent-file")
+	flag.StringVar(&options.EvidenceFilePath, "u", options.EvidenceFilePath, "Alias for -user-agent-file")
 
 	flag.StringVar(&options.LogOutputPath, "log-output", "", "Path to a output log file")
 	flag.StringVar(&options.LogOutputPath, "l", options.LogOutputPath, "Alias for -log-output")
