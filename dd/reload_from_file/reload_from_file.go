@@ -27,8 +27,8 @@ Illustrates how dataset can be reloaded while detections are performed.
 */
 
 import (
-	"bufio"
 	"hash/fnv"
+	"io"
 	"log"
 	"os"
 	"runtime"
@@ -37,19 +37,20 @@ import (
 	"time"
 
 	dd_example "github.com/51Degrees/device-detection-examples-go/v4/dd"
+	"gopkg.in/yaml.v3"
 
 	"github.com/51Degrees/device-detection-go/v4/dd"
 )
 
-// Number of iterations to perform over the User-Agents.
+// Number of iterations to perform over the Evidence Records.
 const fIterationCount = 4
 
 // Report struct for reload from file rn
 type freport struct {
-	mu          sync.Mutex // Mutex
-	uaCount     uint64
-	hashCodes   [fIterationCount]uint32
-	uaProcessed uint64
+	mu                sync.Mutex // Mutex
+	evidenceCount     uint64
+	hashCodes         [fIterationCount]uint32
+	evidenceProcessed uint64
 }
 
 // updateHashCode updates the hash code with the input code ad the index
@@ -71,9 +72,10 @@ func generateHash(str string) uint32 {
 func executeTest(
 	wg *sync.WaitGroup,
 	manager *dd.ResourceManager,
-	ua string,
+	evidence *dd.Evidence,
 	rep *freport,
 	iteration uint32) {
+	defer evidence.Free()
 	// Create results
 	results := dd.NewResultsHash(manager, 1, 0)
 
@@ -81,7 +83,10 @@ func executeTest(
 	defer results.Free()
 
 	// Perform detection
-	results.MatchUserAgent(ua)
+	err := results.MatchEvidence(evidence)
+	if err != nil {
+		log.Fatal("ERROR: Failed to perform detection.")
+	}
 
 	// Loop through all properties
 	for _, property := range results.AvailableProperties() {
@@ -95,50 +100,60 @@ func executeTest(
 		rep.updateHashCode(generateHash(value), iteration)
 	}
 
-	// Increase the number of User-Agents processed
-	atomic.AddUint64(&rep.uaProcessed, 1)
+	// Increase the number of Evidence Records processed
+	atomic.AddUint64(&rep.evidenceProcessed, 1)
 
 	// Complete and mark as done
 	defer wg.Done()
 }
 
-// performDetectionInterations iterates through the User-Agents file and perform
-// detection on each User-Agent. Results of each detection will be hashed and
+// performDetectionInterations iterates through the Evidence Records file and perform
+// detection on each evidence. Results of each detection will be hashed and
 // combine for each iteration. At the end all itertions should have the same
-// hash value. If the hash values are different, it indicates that User-Agents
+// hash value. If the hash values are different, it indicates that Evidence Records
 // might have not been processed correctly in some iterations.
 func performDetectionIterations(
 	manager *dd.ResourceManager,
-	uaFilePath string,
+	evidenceFilePath string,
 	wg *sync.WaitGroup,
 	rep *freport) {
 	for i := 0; i < fIterationCount; i++ {
-		// Loop through the User-Agent file
-		file, err := os.OpenFile(uaFilePath, os.O_RDONLY, 0444)
+		// Loop through the Evidence file
+		file, err := os.OpenFile(evidenceFilePath, os.O_RDONLY, 0444)
 		if err != nil {
-			log.Fatalf("ERROR: Failed to open file \"%s\".\n", uaFilePath)
+			log.Fatalf("ERROR: Failed to open file \"%s\".\n", evidenceFilePath)
 		}
+		defer func() {
+			// Make sure the file is closed properly
+			if err := file.Close(); err != nil {
+				log.Fatalf("ERROR: Failed to close file \"%s\".\n", evidenceFilePath)
+			}
+		}()
 
 		// Actual processing
-		scanner := bufio.NewScanner(file)
-		for scanner.Scan() {
+		dec := yaml.NewDecoder(file)
+		for {
+			// Decode Evidence file by line
+			var doc map[string]string
+			if err := dec.Decode(&doc); err == io.EOF {
+				break
+			} else if err != nil {
+				// Make sure there is no decoder error
+				log.Fatalf("ERROR: Error during decoding file \"%s\". %v\n", evidenceFilePath, err)
+			}
 			// Increase wait group
 			wg.Add(1)
+
+			// Prepare evidence for usage
+			filteredEvidence := dd_example.ConvertEvidenceMap(doc)
+			evidence := dd_example.ExtractEvidence(filteredEvidence)
+
 			go executeTest(
 				wg,
 				manager,
-				scanner.Text(),
+				evidence,
 				rep,
 				uint32(i))
-		}
-
-		// Make sure there is no scanner error
-		if err := scanner.Err(); err != nil {
-			log.Fatalf("ERROR: Error during scanning file \"%s\".\n", uaFilePath)
-		}
-		// Make sure the file is closed properly
-		if err := file.Close(); err != nil {
-			log.Fatalf("ERROR: Failed to close file \"%s\".\n", uaFilePath)
 		}
 	}
 	wg.Done()
@@ -146,23 +161,23 @@ func performDetectionIterations(
 
 func runReloadFromFileSub(
 	manager *dd.ResourceManager,
-	uaFilePath string) string {
+	evidenceFilePath string) string {
 	reloads := 0
 	reloadFails := 0
 	// Create a wait group for iteration function
 	var wg sync.WaitGroup
 
-	// Count the number of User-Agents to be processed
+	// Count the number of Evidence Records to be processed
 	var rep freport
-	rep.uaCount = dd_example.CountUAFromFiles(uaFilePath)
-	rep.uaCount *= fIterationCount
+	rep.evidenceCount = dd_example.CountEvidenceFromFiles(evidenceFilePath)
+	rep.evidenceCount *= fIterationCount
 
 	// Perform detections
 	wg.Add(1)
-	go performDetectionIterations(manager, uaFilePath, &wg, &rep)
+	go performDetectionIterations(manager, evidenceFilePath, &wg, &rep)
 
-	// Perform reload from file until all User-Agents have been processed
-	for rep.uaProcessed < rep.uaCount {
+	// Perform reload from file until all Evidence Records have been processed
+	for rep.evidenceProcessed < rep.evidenceCount {
 		err := manager.ReloadFromOriginalFile()
 		if err == nil {
 			// Failed to reload the original file
@@ -187,7 +202,7 @@ func runReloadFromFileSub(
 		} else if initHashCode != rep.hashCodes[i] {
 			log.Fatalf("Hash codes do not match. Initial hash code is '%d', "+
 				"but iteration '%d' has hash code '%d'. This indicates not "+
-				"all User-Agents have been processed correctly for each "+
+				"all Evidence Records have been processed correctly for each "+
 				"iteration.", initHashCode, rep.hashCodes[i], i)
 		}
 		log.Printf("Hashcode '%d' for iteration '%d'.\n",
@@ -198,8 +213,7 @@ func runReloadFromFileSub(
 
 func runReloadFromFile(perf dd.PerformanceProfile) string {
 	dataFilePath := dd_example.GetFilePathByName([]string{dd_example.LiteDataFile})
-	uaFilePath := dd_example.GetFilePathByName([]string{dd_example.UaFile})
-
+	evidenceFilePath := dd_example.GetFilePathByName([]string{dd_example.EvidenceFile})
 	// Create Resource Manager
 	manager := dd.NewResourceManager()
 	config := dd.NewConfigHash(dd.InMemory)
@@ -219,7 +233,7 @@ func runReloadFromFile(perf dd.PerformanceProfile) string {
 	defer manager.Free()
 
 	// Run the performance tests
-	report := runReloadFromFileSub(manager, uaFilePath)
+	report := runReloadFromFileSub(manager, evidenceFilePath)
 	return report
 }
 

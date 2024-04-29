@@ -31,18 +31,55 @@ import (
 	"bufio"
 	"flag"
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"path/filepath"
 	"strings"
 
 	"github.com/51Degrees/device-detection-go/v4/dd"
+	"gopkg.in/yaml.v3"
 )
 
 // Constants
 const LiteDataFile = "51Degrees-LiteV4.1.hash"
 const EnterpriseDataFile = "Enterprise-HashV41.hash"
 const UaFile = "20000 User Agents.csv"
+const EvidenceFile = "20000 Evidence Records.yml"
+
+// Evidence where all fields are in string format
+type stringEvidence struct {
+	Prefix string
+	Key    string
+	Value  string
+}
+
+// Convert Evidence Records entries from file to struct
+func ConvertEvidenceMap(values map[string]string) []stringEvidence {
+	evidence := make([]stringEvidence, 0)
+	for k, v := range values {
+		strSplit := strings.SplitN(k, ".", 2)
+		prefixStr := strSplit[0]
+		keyStr := strSplit[1]
+		evidence = append(
+			evidence, stringEvidence{prefixStr, keyStr, v})
+	}
+	return evidence
+}
+
+// ExtractEvidence looks into a list of required evidence keys and extract
+// them.
+func ExtractEvidence(strEvidence []stringEvidence) *dd.Evidence {
+	evidence := dd.NewEvidenceHash(uint32(len(strEvidence)))
+	for _, e := range strEvidence {
+		prefix := dd.HttpHeaderString
+		if e.Prefix == "query" {
+			prefix = dd.HttpEvidenceQuery
+		}
+		evidence.Add(prefix, e.Key, e.Value)
+	}
+	return evidence
+}
 
 // Type take a performance profile, run the code and get the return output
 type ExampleFunc func(p dd.PerformanceProfile) string
@@ -113,6 +150,38 @@ func CountUAFromFiles(
 
 	// Count the User-Agents
 	for s.Scan() {
+		count++
+	}
+	return count
+}
+
+// Count the number of Evidence Records in a Evidence Records file and return the number
+// of evidence found.
+func CountEvidenceFromFiles(
+	evidenceFilePath string) uint64 {
+	var count uint64 = 0
+	// Count the number of Evidence Records
+	f, err := os.OpenFile(evidenceFilePath, os.O_RDONLY, 0444)
+	if err != nil {
+		log.Fatalf("ERROR: Failed to open file \"%s\".\n", evidenceFilePath)
+	}
+	defer func() {
+		if err := f.Close(); err != nil {
+			log.Fatalf("ERROR: Failed to close file \"%s\".\n", evidenceFilePath)
+		}
+	}()
+
+	dec := yaml.NewDecoder(f)
+	// Count the Evidence Records
+	for {
+		// Decode Evidence file by line
+		var doc interface{}
+		if err := dec.Decode(&doc); err == io.EOF {
+			break
+		} else if err != nil {
+			// Make sure there is no decoder error
+			log.Fatalf("ERROR: Failed during decoding file \"%s\". %v\n", evidenceFilePath, err)
+		}
 		count++
 	}
 	return count
@@ -193,8 +262,8 @@ func ParseOptions() Options {
 	flag.StringVar(&options.DataFilePath, "data-file", "../"+LiteDataFile, "Path to a 51Degrees Hash data file")
 	flag.StringVar(&options.DataFilePath, "d", options.DataFilePath, "Alias for -data-file")
 
-	flag.StringVar(&options.EvidenceFilePath, "user-agent-file", "../"+UaFile, "Path to a User-Agents CSV file")
-	flag.StringVar(&options.EvidenceFilePath, "u", options.DataFilePath, "Alias for -user-agent-file")
+	flag.StringVar(&options.EvidenceFilePath, "evidence-file", "../"+EvidenceFile, "Path to a Evidence Records YAML file")
+	flag.StringVar(&options.EvidenceFilePath, "e", options.EvidenceFilePath, "Alias for -evidence-file")
 
 	flag.StringVar(&options.LogOutputPath, "log-output", "", "Path to a output log file")
 	flag.StringVar(&options.LogOutputPath, "l", options.LogOutputPath, "Alias for -log-output")

@@ -36,10 +36,10 @@ go test -run Example_performance
 This example will output a report to ./performance_report.log. The report
 content is in the below format:
 ```
-Average 0.00456 ms per User-Agent
-Total User-Agents: 80000
-IsMobile User-Agents: 58076
-Processed User-Agents: 80000
+Average 0.00456 ms per Evidence Record
+Total Evidence Records: 80000
+IsMobile Evidence Records: 58076
+Processed Evidence Records: 80000
 Number of CPUs: 2
 ```
 */
@@ -47,6 +47,7 @@ Number of CPUs: 2
 import ( //	"runtime"
 	"bufio"
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"path/filepath"
@@ -57,6 +58,7 @@ import ( //	"runtime"
 	"time"
 
 	dd_example "github.com/51Degrees/device-detection-examples-go/v4/dd"
+	"gopkg.in/yaml.v3"
 
 	"github.com/51Degrees/device-detection-go/v4/dd"
 )
@@ -66,34 +68,36 @@ const reportFile = "performance_report.log"
 
 // Report struct for each performance run
 type report struct {
-	uaCount        uint64
-	uaIsMobile     uint64
-	uaProcessed    uint64
-	processingTime int64
+	evidenceCount     uint64
+	evidenceIsMobile  uint64
+	evidenceProcessed uint64
+	processingTime    int64
 }
 
-// Perform device detection on a User-Agent
-func matchUserAgent(
+// Perform device detection on a Evidence Record
+func matchEvidenceRecord( //TODO rewrite
 	wg *sync.WaitGroup,
 	manager *dd.ResourceManager,
-	ua string,
+	evidence *dd.Evidence,
 	calibration bool,
 	rep *report) {
-	// Increase the number of User-Agents being processed
-	atomic.AddUint64(&rep.uaProcessed, 1)
+	defer evidence.Free()
+	// Increase the number of Evidence Record being processed
+	atomic.AddUint64(&rep.evidenceProcessed, 1)
 	if !calibration {
-		// Create results
-		results := dd.NewResultsHash(manager, 1, 0)
+		results := dd.NewResultsHash(manager, uint32(evidence.Count()), 0)
 
 		// Make sure results object is freed after function execution.
 		defer results.Free()
 
-		// fmt.Println(ua)
 		// Perform detection
-		results.MatchUserAgent(ua)
+		err := results.MatchEvidence(evidence)
+		if err != nil {
+			log.Fatal("ERROR: Failed to perform detection.")
+		}
 
 		// Get the value in string
-		value, err := results.ValuesString(
+		res, err := results.ValuesString(
 			"IsMobile",
 			",")
 		if err != nil {
@@ -101,8 +105,8 @@ func matchUserAgent(
 		}
 
 		// Update report
-		if strings.Compare("True", value) == 0 {
-			atomic.AddUint64(&rep.uaIsMobile, 1)
+		if strings.Compare("True", res) == 0 {
+			atomic.AddUint64(&rep.evidenceIsMobile, 1)
 		}
 	}
 
@@ -110,9 +114,9 @@ func matchUserAgent(
 	defer wg.Done()
 }
 
-// Run the performance test. Determine the number of records in a User-Agent
-// file. Iterate through the User-Agent file and perform detection on each
-// User-Agent. Record the processing time and update a report statistic.
+// Run the performance test. Determine the number of records in a Evidence
+// file. Iterate through the Evidence file and perform detection on each
+// Evidence. Record the processing time and update a report statistic.
 func performDetections(
 	manager *dd.ResourceManager,
 	options dd_example.Options,
@@ -120,40 +124,49 @@ func performDetections(
 	rep *report) {
 	// Create a wait group
 	var wg sync.WaitGroup
-	uaFilePath := dd_example.GetFilePathByPath(options.EvidenceFilePath)
+	evidenceFilePath := dd_example.GetFilePathByPath(options.EvidenceFilePath)
 
-	rep.uaCount = dd_example.CountUAFromFiles(uaFilePath)
-	rep.uaCount *= options.Iterations
+	// rep.uaCount = dd_example.CountUAFromFiles(uaFilePath) TODO remove
+	// rep.uaCount *= options.Iterations
 
 	for i := 0; i < int(options.Iterations); i++ {
-		// Loop through the User-Agent file
-		file, err := os.OpenFile(uaFilePath, os.O_RDONLY, 0444)
+		// Loop through the Evidence file
+		file, err := os.OpenFile(evidenceFilePath, os.O_RDONLY, 0444)
 		if err != nil {
-			log.Fatalf("ERROR: Failed to open file \"%s\".\n", uaFilePath)
+			log.Fatalf("ERROR: Failed to open file \"%s\".\n", evidenceFilePath)
 		}
+		defer func() {
+			// Make sure the file is closed properly
+			if err := file.Close(); err != nil {
+				log.Fatalf("ERROR: Failed to close file \"%s\".\n", evidenceFilePath)
+			}
+		}()
 
 		// Actual processing
-		scanner := bufio.NewScanner(file)
-
-		for scanner.Scan() {
+		dec := yaml.NewDecoder(file)
+		for {
+			// Decode Evidence file by line
+			var doc map[string]string
+			if err := dec.Decode(&doc); err == io.EOF {
+				break
+			} else if err != nil {
+				// Make sure there is no decoder error
+				log.Fatalf("ERROR: Failed during decoding file \"%s\". %v\n", evidenceFilePath, err)
+			}
 			// Increase wait group
 			wg.Add(1)
-			go matchUserAgent(
+			rep.evidenceCount += 1
+
+			// Prepare evidence for usage
+			filteredEvidence := dd_example.ConvertEvidenceMap(doc)
+			evidence := dd_example.ExtractEvidence(filteredEvidence)
+
+			go matchEvidenceRecord(
 				&wg,
 				manager,
-				scanner.Text(),
+				evidence,
 				calibration,
 				rep)
-		}
-
-		// Make sure there is no scanner error
-		if err := scanner.Err(); err != nil {
-			log.Fatalf("ERROR: Error during scanning file \"%s\".\n", uaFilePath)
-		}
-
-		// Make sure the file is closed properly
-		if err := file.Close(); err != nil {
-			log.Fatalf("ERROR: Failed to close file \"%s\".\n", uaFilePath)
 		}
 	}
 	// Wait until all goroutines finish
@@ -180,7 +193,7 @@ func printReport(caliR *report, actR *report, logOutputPath string) string {
 		}
 		path = filepath.Join(rootDir, logOutputPath)
 	}
-	path = filepath.Join(logOutputPath, reportFile)
+	path = filepath.Join(path, reportFile)
 
 	// Create a report file
 	f, err := os.Create(path)
@@ -193,22 +206,22 @@ func printReport(caliR *report, actR *report, logOutputPath string) string {
 	w := bufio.NewWriter(f)
 
 	// Make sure calibration and actual detections were performed on the same
-	// number of user agents.
-	if actR.uaCount != caliR.uaCount {
+	// number of Evidence Records.
+	if actR.evidenceCount != caliR.evidenceCount {
 		log.Fatal("ERROR: Calibration and actual detections were not" +
-			"performed on the same number of User-Agents.")
+			"performed on the same number of Evidence Records.")
 	}
 
 	// Calculate actual performance
 	avg := float64(actR.processingTime-caliR.processingTime) /
-		float64(actR.uaCount)
-	_, err = fmt.Fprintf(w, "Average %.5f ms per User-Agent\n", avg)
+		float64(actR.evidenceCount)
+	_, err = fmt.Fprintf(w, "Average %.5f ms per Evidence Record\n", avg)
 	checkWriteError(err)
-	_, err = fmt.Fprintf(w, "Total User-Agents: %d\n", actR.uaCount)
+	_, err = fmt.Fprintf(w, "Total Evidence Records: %d\n", actR.evidenceCount)
 	checkWriteError(err)
-	_, err = fmt.Fprintf(w, "IsMobile User-Agents: %d\n", actR.uaIsMobile)
+	_, err = fmt.Fprintf(w, "IsMobile Evidence Records: %d\n", actR.evidenceIsMobile)
 	checkWriteError(err)
-	_, err = fmt.Fprintf(w, "Processed User-Agents: %d\n", actR.uaProcessed)
+	_, err = fmt.Fprintf(w, "Processed Evidence Records: %d\n", actR.evidenceProcessed)
 	checkWriteError(err)
 	_, err = fmt.Fprintf(w, "Number of CPUs: %d\n", runtime.NumCPU())
 	checkWriteError(err)
@@ -230,8 +243,8 @@ func run(
 	caliTime := end.Sub(start)
 	caliReport.processingTime = caliTime.Milliseconds()
 	// Validation to make sure same number of UAs have been read and processed
-	if caliReport.uaCount != caliReport.uaProcessed {
-		log.Fatalln("ERROR: Not all User-Agents have been processed.")
+	if caliReport.evidenceCount != caliReport.evidenceProcessed {
+		log.Fatalln("ERROR: Not all Evidence Records have been processed.")
 	}
 
 	// Action
@@ -242,8 +255,8 @@ func run(
 	actTime := end.Sub(start)
 	actReport.processingTime = actTime.Milliseconds()
 	// Validation to make sure same number of UAs have been read and processed
-	if actReport.uaCount != actReport.uaProcessed {
-		log.Fatalln("ERROR: Not all User-Agents have been processed.")
+	if actReport.evidenceCount != actReport.evidenceProcessed {
+		log.Fatalln("ERROR: Not all Evidence Records have been processed.")
 	}
 
 	// Print the final performance report
@@ -283,10 +296,10 @@ func main() {
 	dd_example.PerformExampleOptions(dd.InMemory, runPerformance)
 	// The performance is output to a file 'performance_report.log' with content
 	// similar as below:
-	//   Average 0.01510 ms per User-Agent
-	//   Total User-Agents: 20000
-	//   IsMobile User-Agents: 14527
-	//   Processed User-Agents: 20000
+	//   Average 0.01510 ms per Evidence Record
+	//   Total Evidence Records: 20000
+	//   IsMobile Evidence Records: 14527
+	//   Processed Evidence Records: 20000
 	//   Number of CPUs: 2
 
 	// Output:
