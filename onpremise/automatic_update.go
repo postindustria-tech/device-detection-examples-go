@@ -13,10 +13,25 @@ func main() {
 	//Create on-premise engine
 	pl, err := onpremise.New(
 		config,
+		//Provide your own file URL
+		//it can be compressed as gz or raw, engine will handle it
 		onpremise.WithDataUpdateUrl(
 			"https://myprovider.com/1.tar.gz",
-			30000,
 		),
+		//set custom polling interval
+		onpremise.WithPollingInterval(2),
+		// randomize polling interval, it will append random number of seconds to polling interval
+		// in case you have multiple instances of the engine running and want to avoid polling at the exact same time
+		onpremise.WithRandomization(60),
+
+		// In case you want to use 51degrees file provider you just set licence key and product
+		onpremise.WithProduct("Hash"),
+		onpremise.WithLicenceKey("YOUR_LICENCE_KEY"),
+		//	in case you want to disable auto update
+		onpremise.WithAutoUpdate(false),
+		// in case you want to update file from URL on start of the engine otherwise it will be pulled
+		// on next polling interval
+		onpremise.WithUpdateOnStart(true),
 	)
 
 	if err != nil {
