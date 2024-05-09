@@ -106,7 +106,7 @@ func GetFilePathByPath(path string) string {
 		[]string{file},
 	)
 	if err != nil {
-		log.Fatalf("Could not find any file that matches for \"%s\" at path \"%s\".\n",
+		log.Fatalf("Could not find any file that matches \"%s\" at path \"%s\".\n",
 			file,
 			dir)
 	}
