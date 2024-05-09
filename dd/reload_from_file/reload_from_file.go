@@ -213,7 +213,7 @@ func runReloadFromFileSub(
 
 func runReloadFromFile(perf dd.PerformanceProfile) string {
 	dataFilePath := dd_example.GetFilePathByName([]string{dd_example.LiteDataFile})
-	evidenceFilePath := dd_example.GetFilePathByName([]string{dd_example.EvidenceFile})
+	evidenceFilePath := dd_example.GetFilePathByName([]string{dd_example.EvidenceFileYaml})
 	// Create Resource Manager
 	manager := dd.NewResourceManager()
 	config := dd.NewConfigHash(dd.InMemory)

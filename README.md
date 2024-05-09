@@ -16,7 +16,7 @@ pwsh ci/fetch-assets.ps1 .
 or alternatively you can download them from [device-detection-data](https://github.com/51Degrees/device-detection-data) repo (the links are below) and put in the root of this repository. 
 
 - [51Degrees-LiteV4.1.hash](https://github.com/51Degrees/device-detection-data/blob/main/51Degrees-LiteV4.1.hash)
-- [20000 User Agents.csv](https://github.com/51Degrees/device-detection-data/blob/main/20000%20User%20Agents.csv)
+- [20000 Evidence Records.yml](https://github.com/51Degrees/device-detection-data/blob/main/20000%20Evidence%20Records.yml)
 
 ## Examples
 
@@ -32,7 +32,7 @@ Below is a table that describes the examples:
 |dd/getting_started/getting_sarted.go|A simple example that shows how to initialize a resource manager and perform device detection on User-Agent strings.|
 |dd/match_device_id/match_device_id.go|A simple example that shows how to perform device detection using Device Id.|
 |dd/match_metrics/match_metrics.go|A simple example that shows how to access match metrics.|
-|dd/offline_processing/offline_processing.go|An example that shows how to process through User-Agents stored in a file, and output detection results and metrics to a local file for further evaluation. Output file is `./device-detection-go/dd/device-detection-cxx/device-detection-data/20000 User Agents.processed.csv`|
+|dd/offline_processing/offline_processing.go|An example that shows how to process through User-Agents stored in a file, and output detection results and metrics to a local file for further evaluation. Output file is `./device-detection-go/dd/device-detection-cxx/device-detection-data/20000 Evidence Records.yml`|
 |dd/performance/performance.go|An example perform performance benchmarking of our device detection solution and output the benchmark to a report file. Output file is `performance_report.log` in the working directory.|
 |dd/reload_from_file/reload_from_file.go|An example that demonstrates how a data file can be reloaded while serving device detection requests.|
 |dd/reload_from_memory/reload_from_memory.go|To be implemented|

@@ -44,8 +44,8 @@ import (
 // Constants
 const LiteDataFile = "51Degrees-LiteV4.1.hash"
 const EnterpriseDataFile = "Enterprise-HashV41.hash"
-const UaFile = "20000 User Agents.csv"
-const EvidenceFile = "20000 Evidence Records.yml"
+const UaFileCSV = "20000 User Agents.csv"
+const EvidenceFileYaml = "20000 Evidence Records.yml"
 
 // Evidence where all fields are in string format
 type stringEvidence struct {
@@ -262,7 +262,7 @@ func ParseOptions() Options {
 	flag.StringVar(&options.DataFilePath, "data-file", "../"+LiteDataFile, "Path to a 51Degrees Hash data file")
 	flag.StringVar(&options.DataFilePath, "d", options.DataFilePath, "Alias for -data-file")
 
-	flag.StringVar(&options.EvidenceFilePath, "evidence-file", "../"+EvidenceFile, "Path to a Evidence Records YAML file")
+	flag.StringVar(&options.EvidenceFilePath, "evidence-file", "../"+EvidenceFileYaml, "Path to a Evidence Records YAML file")
 	flag.StringVar(&options.EvidenceFilePath, "e", options.EvidenceFilePath, "Alias for -evidence-file")
 
 	flag.StringVar(&options.LogOutputPath, "log-output", "", "Path to a output log file")

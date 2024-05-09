@@ -49,6 +49,7 @@ import ( //	"runtime"
 	"fmt"
 	"io"
 	"log"
+	_ "net/http/pprof"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -75,39 +76,36 @@ type report struct {
 }
 
 // Perform device detection on a Evidence Record
-func matchEvidenceRecord( //TODO rewrite
+func matchEvidenceRecord(
 	wg *sync.WaitGroup,
 	manager *dd.ResourceManager,
 	evidence *dd.Evidence,
-	calibration bool,
 	rep *report) {
-	defer evidence.Free()
 	// Increase the number of Evidence Record being processed
 	atomic.AddUint64(&rep.evidenceProcessed, 1)
-	if !calibration {
-		results := dd.NewResultsHash(manager, uint32(evidence.Count()), 0)
 
-		// Make sure results object is freed after function execution.
-		defer results.Free()
+	results := dd.NewResultsHash(manager, uint32(evidence.Count()), 0)
 
-		// Perform detection
-		err := results.MatchEvidence(evidence)
-		if err != nil {
-			log.Fatal("ERROR: Failed to perform detection.")
-		}
+	// Make sure results object is freed after function execution.
+	defer results.Free()
 
-		// Get the value in string
-		res, err := results.ValuesString(
-			"IsMobile",
-			",")
-		if err != nil {
-			log.Fatalln(err)
-		}
+	// Perform detection
+	err := results.MatchEvidence(evidence)
+	if err != nil {
+		log.Fatal("ERROR: Failed to perform detection.")
+	}
 
-		// Update report
-		if strings.Compare("True", res) == 0 {
-			atomic.AddUint64(&rep.evidenceIsMobile, 1)
-		}
+	// Get the value in string
+	res, err := results.ValuesString(
+		"IsMobile",
+		",")
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	// Update report
+	if strings.Compare("True", res) == 0 {
+		atomic.AddUint64(&rep.evidenceIsMobile, 1)
 	}
 
 	// Complete and mark as done
@@ -120,57 +118,73 @@ func matchEvidenceRecord( //TODO rewrite
 func performDetections(
 	manager *dd.ResourceManager,
 	options dd_example.Options,
-	calibration bool,
 	rep *report) {
 	// Create a wait group
 	var wg sync.WaitGroup
 	evidenceFilePath := dd_example.GetFilePathByPath(options.EvidenceFilePath)
 
-	// rep.uaCount = dd_example.CountUAFromFiles(uaFilePath) TODO remove
-	// rep.uaCount *= options.Iterations
-
-	for i := 0; i < int(options.Iterations); i++ {
-		// Loop through the Evidence file
-		file, err := os.OpenFile(evidenceFilePath, os.O_RDONLY, 0444)
-		if err != nil {
-			log.Fatalf("ERROR: Failed to open file \"%s\".\n", evidenceFilePath)
+	// Read and extract Evidence for the performance check
+	evidenceSlice := readYAMLFile(evidenceFilePath)
+	defer func() {
+		// Free up evidence after test completion
+		for _, evidence := range evidenceSlice {
+			evidence.Free()
 		}
-		defer func() {
-			// Make sure the file is closed properly
-			if err := file.Close(); err != nil {
-				log.Fatalf("ERROR: Failed to close file \"%s\".\n", evidenceFilePath)
-			}
-		}()
-
+	}()
+	start := time.Now()
+	for i := 0; i < int(options.Iterations); i++ {
 		// Actual processing
-		dec := yaml.NewDecoder(file)
-		for {
-			// Decode Evidence file by line
-			var doc map[string]string
-			if err := dec.Decode(&doc); err == io.EOF {
-				break
-			} else if err != nil {
-				// Make sure there is no decoder error
-				log.Fatalf("ERROR: Failed during decoding file \"%s\". %v\n", evidenceFilePath, err)
-			}
+		for _, evidence := range evidenceSlice {
 			// Increase wait group
 			wg.Add(1)
 			rep.evidenceCount += 1
-
-			// Prepare evidence for usage
-			filteredEvidence := dd_example.ConvertEvidenceMap(doc)
-			evidence := dd_example.ExtractEvidence(filteredEvidence)
 
 			go matchEvidenceRecord(
 				&wg,
 				manager,
 				evidence,
-				calibration,
 				rep)
 		}
 	}
 	// Wait until all goroutines finish
 	wg.Wait()
+	rep.processingTime = time.Since(start).Milliseconds()
+}
+
+// Open, read, decode and extract Evidence to be used in the performance test.
+// Data can be reused for multiple iterations.
+func readYAMLFile(evidenceFilePath string) []*dd.Evidence {
+	// Open YAML file
+	file, err := os.OpenFile(evidenceFilePath, os.O_RDONLY, 0444)
+	if err != nil {
+		log.Fatalf("ERROR: Failed to open file \"%s\".\n", evidenceFilePath)
+	}
+	defer func() {
+		// Make sure the file is closed properly
+		if err := file.Close(); err != nil {
+			log.Fatalf("ERROR: Failed to close file \"%s\".\n", evidenceFilePath)
+		}
+	}()
+
+	// Decode YAML file
+	var res []*dd.Evidence
+	dec := yaml.NewDecoder(file)
+	for {
+		// Decode Evidence file by line
+		var doc map[string]string
+		if err := dec.Decode(&doc); err == io.EOF {
+			break
+		} else if err != nil {
+			// Make sure there is no decoder error
+			log.Fatalf("ERROR: Failed during decoding file \"%s\". %v\n", evidenceFilePath, err)
+		}
+		// Prepare evidence for usage
+		filteredEvidence := dd_example.ConvertEvidenceMap(doc)
+		evidence := dd_example.ExtractEvidence(filteredEvidence)
+
+		res = append(res, evidence)
+	}
+	return res
 }
 
 // Check a error returned from writing to a buffer
@@ -181,7 +195,7 @@ func checkWriteError(err error) {
 }
 
 // Print report to a report file and return output message.
-func printReport(caliR *report, actR *report, logOutputPath string) string {
+func printReport(actR *report, logOutputPath string) string {
 	// Get relative output path for testing
 	var path string
 	if filepath.IsAbs(logOutputPath) {
@@ -205,17 +219,11 @@ func printReport(caliR *report, actR *report, logOutputPath string) string {
 	// Create a writer
 	w := bufio.NewWriter(f)
 
-	// Make sure calibration and actual detections were performed on the same
-	// number of Evidence Records.
-	if actR.evidenceCount != caliR.evidenceCount {
-		log.Fatal("ERROR: Calibration and actual detections were not" +
-			"performed on the same number of Evidence Records.")
-	}
-
-	// Calculate actual performance
-	avg := float64(actR.processingTime-caliR.processingTime) /
-		float64(actR.evidenceCount)
-	_, err = fmt.Fprintf(w, "Average %.5f ms per Evidence Record\n", avg)
+	msPerRecord := float64(actR.processingTime) / float64(actR.evidenceCount)
+	_, err = fmt.Fprintf(w, "Average %.5f ms per Evidence Record\n", msPerRecord)
+	checkWriteError(err)
+	detectionsPerSecond := float64(actR.evidenceCount) / float64(actR.processingTime)
+	_, err = fmt.Fprintf(w, "Average %.2f detections per second\n", detectionsPerSecond)
 	checkWriteError(err)
 	_, err = fmt.Fprintf(w, "Total Evidence Records: %d\n", actR.evidenceCount)
 	checkWriteError(err)
@@ -229,38 +237,20 @@ func printReport(caliR *report, actR *report, logOutputPath string) string {
 	return fmt.Sprintf("Output report to file \"%s\".\n", reportFile)
 }
 
-// Run the performance example. Performs two phase: calibration and actual
-// detection. Processing time of each phase is recorded to produce the actual
-// processing time per detection. Return output messages.
+// Run the performance example and return output messages.
 func run(
 	manager *dd.ResourceManager,
 	options dd_example.Options) string {
-	// Calibration
-	caliReport := report{0, 0, 0, 0}
-	start := time.Now()
-	performDetections(manager, options, true, &caliReport)
-	end := time.Now()
-	caliTime := end.Sub(start)
-	caliReport.processingTime = caliTime.Milliseconds()
-	// Validation to make sure same number of UAs have been read and processed
-	if caliReport.evidenceCount != caliReport.evidenceProcessed {
-		log.Fatalln("ERROR: Not all Evidence Records have been processed.")
-	}
-
 	// Action
 	actReport := report{0, 0, 0, 0}
-	start = time.Now()
-	performDetections(manager, options, false, &actReport)
-	end = time.Now()
-	actTime := end.Sub(start)
-	actReport.processingTime = actTime.Milliseconds()
-	// Validation to make sure same number of UAs have been read and processed
+	performDetections(manager, options, &actReport)
+	// Validation to make sure same number of Evidences have been read and processed
 	if actReport.evidenceCount != actReport.evidenceProcessed {
 		log.Fatalln("ERROR: Not all Evidence Records have been processed.")
 	}
 
 	// Print the final performance report
-	return printReport(&caliReport, &actReport, options.LogOutputPath)
+	return printReport(&actReport, options.LogOutputPath)
 }
 
 // Setup all configuration settings required for running this example.
@@ -297,6 +287,7 @@ func main() {
 	// The performance is output to a file 'performance_report.log' with content
 	// similar as below:
 	//   Average 0.01510 ms per Evidence Record
+	// 	 Average 416.02 detections per second
 	//   Total Evidence Records: 20000
 	//   IsMobile Evidence Records: 14527
 	//   Processed Evidence Records: 20000

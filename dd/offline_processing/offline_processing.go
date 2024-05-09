@@ -159,7 +159,7 @@ func runOfflineProcessing(perf dd.PerformanceProfile) string {
 	manager := dd.NewResourceManager()
 	config := dd.NewConfigHash(perf)
 	filePath := dd_example.GetFilePathByName([]string{dd_example.LiteDataFile})
-	evidenceFilePath := dd_example.GetFilePathByName([]string{dd_example.EvidenceFile})
+	evidenceFilePath := dd_example.GetFilePathByName([]string{dd_example.EvidenceFileYaml})
 	evDir := filepath.Dir(evidenceFilePath)
 	evBase := strings.TrimSuffix(filepath.Base(evidenceFilePath), filepath.Ext(evidenceFilePath))
 	outputFilePath := fmt.Sprintf("%s/%s.processed.yml", evDir, evBase)
@@ -196,5 +196,5 @@ func runOfflineProcessing(perf dd.PerformanceProfile) string {
 func main() {
 	dd_example.PerformExample(dd.Default, runOfflineProcessing)
 	// Output:
-	// Output to "../20000 Evidence Records.processed.csv".
+	// Output to "../20000 Evidence Records.processed.yml".
 }
