@@ -7,12 +7,13 @@ import (
 )
 
 func main() {
-	//Create config
 
 	RunExample(
 		func(params ExampleParams) error {
-			//Create on-premise engine
+			//Create config
 			config := dd.NewConfigHash(dd.Balanced)
+
+			//Create on-premise engine
 			pl, err := onpremise.New(
 				config,
 				//Provide your own file URL
