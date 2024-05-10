@@ -23,8 +23,8 @@
 package main
 
 /*
-This example illustrates how to process a list of User-Agents from file and
-output detection metrics and properties of each User-Agent to another file for
+This example illustrates how to process a list of Evidence Records from file and
+output detection metrics and properties of each Evidence Record to another file for
 further evaluation.
 
 Expected output is as described at the "// Output:..." section locate at the
@@ -36,129 +36,121 @@ go test -run Example_offline_processing
 ```
 
 This example will output to a file located at
-"../device-detection-go/dd/device-detection-cxx/device-detection-data/20000 User Agents.processed.csv".
-This contains the detection metrics User-Agent,Drift,Difference,Iterations and
-available properties for each User-Agent.
-
+"../device-detection-go/dd/device-detection-cxx/device-detection-data/20000 Evidence Records.processed.yml".
+This contains IsMobile, BrowserName, BrowserVersion, PlatformName, PlatformVersion, DeviceId
 */
 
 import (
-	"bufio"
 	"fmt"
-	dd_example "github.com/51Degrees/device-detection-examples-go/v4/dd"
 	"io"
 	"log"
 	"os"
 	"path/filepath"
 	"strings"
 
+	dd_example "github.com/51Degrees/device-detection-examples-go/v4/dd"
+	"gopkg.in/yaml.v3"
+
 	"github.com/51Degrees/device-detection-go/v4/dd"
 )
 
-// function match performs a match on an input User-Agent string and determine
-// if the device is a mobile device.
-func processUserAgent(
-	results *dd.ResultsHash,
-	ua string) {
+// function match performs a match on an input Evidence, calulates
+// configured properties and returns them as yaml entry
+func processEvidence(
+	manager *dd.ResourceManager,
+	evidence *dd.Evidence) map[string]string {
+	defer evidence.Free()
+	// Create results
+	results := dd.NewResultsHash(manager, uint32(evidence.Count()), 0)
+	// Make sure results object is freed after function execution.
+	defer results.Free()
+	available := results.AvailableProperties()
+
 	// Perform detection
-	err := results.MatchUserAgent(ua)
+	err := results.MatchEvidence(evidence)
 	if err != nil {
-		log.Fatalf(
-			"ERROR: \"%s\" on User-Agent \"%s\".\n", err, ua)
+		log.Fatal("ERROR: Failed to perform detection.")
 	}
+
+	// Get the values in string
+	res := make(map[string]string)
+	for i := 0; i < len(available); i++ {
+		hasValues, err := results.HasValuesByIndex(i)
+		if err != nil {
+			log.Fatalln(err)
+		}
+
+		lowerKey := strings.ToLower(available[i])
+		if hasValues {
+			value, err := results.ValuesString(
+				available[i],
+				",")
+			if err != nil {
+				log.Fatalln(err)
+			}
+			res["device."+lowerKey] = value
+		}
+	}
+	res["device.deviceid"], err = results.DeviceId()
+	if err != nil {
+		log.Fatalf("ERROR: Failed to get unique DeviceID: %v", err)
+	}
+	return res
 }
 
 func process(
 	manager *dd.ResourceManager,
-	uaFilePath string,
+	evidenceFilePath string,
 	outputFilePath string) {
 	outFile, err := os.Create(outputFilePath)
 	if err != nil {
 		log.Fatalf("ERROR: Failed to create file %s.\n", outputFilePath)
 	}
-
-	// Create results
-	results := dd.NewResultsHash(manager, 1, 0)
-
-	// Make sure results object is freed after function execution.
-	defer results.Free()
-
-	// Open the User-Agents file for processing
-	uaFile, err := os.OpenFile(uaFilePath, os.O_RDONLY, 0444)
-	if err != nil {
-		log.Fatalf("ERROR: Failed to open file \"%s\".\n", uaFilePath)
-	}
-
-	// Create a scanner to read User-Agents
-	scanner := bufio.NewScanner(uaFile)
 	defer func() {
-		if err := scanner.Err(); err != nil {
-			log.Fatalf("ERROR: Failed during scanning file \"%s\".\n", uaFilePath)
+		if err := outFile.Close(); err != nil {
+			log.Fatalf("ERROR: Failed to close file \"%s\".\n", outputFilePath)
 		}
 	}()
 
-	w := io.Writer(outFile)
-	available := results.AvailableProperties()
-
-	// Print header to output file
-	fmt.Fprintf(w, "\"User-Agent\",\"Drift\",\"Difference\",\"Iterations\"")
-	for i := 0; i < len(available); i++ {
-		fmt.Fprintf(w, ",\"%s\"", available[i])
+	// Open the Evidence Records file for processing
+	file, err := os.OpenFile(evidenceFilePath, os.O_RDONLY, 0444)
+	if err != nil {
+		log.Fatalf("ERROR: Failed to open file \"%s\".\n", evidenceFilePath)
 	}
-	fmt.Fprintf(w, "\n")
+	defer func() {
+		if err := file.Close(); err != nil {
+			log.Fatalf("ERROR: Failed to close file \"%s\".\n", evidenceFilePath)
+		}
+	}()
 
-	for scanner.Scan() {
-		processUserAgent(results, scanner.Text())
-		// Output the matched  user agent string, drift, difference, iterations
-		userAgent, err := results.UserAgent(0)
+	enc := yaml.NewEncoder(outFile)
+	dec := yaml.NewDecoder(file)
+	for {
+		// Decode Evidence file by line
+		var doc map[string]string
+		if err := dec.Decode(&doc); err == io.EOF {
+			break
+		} else if err != nil {
+			log.Fatalf("ERROR: Failed during decoding file \"%s\". %v\n", evidenceFilePath, err)
+		}
+
+		// Prepare evidence for usage
+		filteredEvidence := dd_example.ConvertEvidenceMap(doc)
+		evidence := dd_example.ExtractEvidence(filteredEvidence)
+
+		values := processEvidence(manager, evidence)
+
+		err = enc.Encode(values)
 		if err != nil {
-			log.Fatal(err.Error())
+			log.Fatalf("ERROR: Failed during encoding file \"%s\". %v\n", outputFilePath, err)
 		}
+	}
+	enc.Close()
 
-		drift, err := results.DriftByIndex(0)
-		if err != nil {
-			log.Fatal(err.Error())
-		}
-
-		difference, err := results.DifferenceByIndex(0)
-		if err != nil {
-			log.Fatal(err.Error())
-		}
-
-		iterations, err := results.IterationsByIndex(0)
-		if err != nil {
-			log.Fatal(err.Error())
-		}
-
-		fmt.Fprintf(
-			w,
-			"\"%s\",%d,%d,%d",
-			userAgent,
-			drift,
-			difference,
-			iterations)
-		// Get the values in string
-		for i := 0; i < len(available); i++ {
-			hasValues, err := results.HasValuesByIndex(i)
-			if err != nil {
-				log.Fatalln(err)
-			}
-
-			// Write empty value if one isn't available
-			if !hasValues {
-				fmt.Fprintf(w, ",\"\"")
-			} else {
-				value, err := results.ValuesString(
-					"IsMobile",
-					",")
-				if err != nil {
-					log.Fatalln(err)
-				}
-
-				fmt.Fprintf(w, ",%s", value)
-			}
-		}
-		fmt.Fprintf(w, "\n")
+	// Manually writing '...' to end the YAML file
+	_, err = outFile.WriteString("...\n")
+	if err != nil {
+		log.Fatalf("ERROR: Failed to write end for file \"%s\". %v\n", outputFilePath, err)
 	}
 }
 
@@ -166,11 +158,11 @@ func runOfflineProcessing(perf dd.PerformanceProfile) string {
 	// Initialise manager
 	manager := dd.NewResourceManager()
 	config := dd.NewConfigHash(perf)
-	filePath := dd_example.GetFilePath([]string{dd_example.LiteDataFile})
-	uaFilePath := dd_example.GetFilePath([]string{dd_example.UaFile})
-	uaDir := filepath.Dir(uaFilePath)
-	uaBase := strings.TrimSuffix(filepath.Base(uaFilePath), filepath.Ext(uaFilePath))
-	outputFilePath := fmt.Sprintf("%s/%s.processed.csv", uaDir, uaBase)
+	filePath := dd_example.GetFilePathByName([]string{dd_example.LiteDataFile})
+	evidenceFilePath := dd_example.GetFilePathByName([]string{dd_example.EvidenceFileYaml})
+	evDir := filepath.Dir(evidenceFilePath)
+	evBase := strings.TrimSuffix(filepath.Base(evidenceFilePath), filepath.Ext(evidenceFilePath))
+	outputFilePath := fmt.Sprintf("%s/%s.processed.yml", evDir, evBase)
 	// Get base path
 	basePath, err := os.Getwd()
 	if err != nil {
@@ -188,7 +180,7 @@ func runOfflineProcessing(perf dd.PerformanceProfile) string {
 	err = dd.InitManagerFromFile(
 		manager,
 		*config,
-		"IsMobile,BrowserName,DeviceType,PriceBand,ReleaseMonth,ReleaseYear",
+		"IsMobile,BrowserName,BrowserVersion,PlatformName,PlatformVersion",
 		filePath)
 	if err != nil {
 		log.Fatalln(err)
@@ -197,12 +189,12 @@ func runOfflineProcessing(perf dd.PerformanceProfile) string {
 	// Make sure manager object will be freed after the function execution
 	defer manager.Free()
 
-	process(manager, uaFilePath, outputFilePath)
+	process(manager, evidenceFilePath, outputFilePath)
 	return fmt.Sprintf("Output to \"%s\".\n", relOutputFilePath)
 }
 
 func main() {
 	dd_example.PerformExample(dd.Default, runOfflineProcessing)
 	// Output:
-	// Output to "../20000 User Agents.processed.csv".
+	// Output to "../20000 Evidence Records.processed.yml".
 }
