@@ -77,7 +77,7 @@ func executeTest(
 	iteration uint32) {
 	defer evidence.Free()
 	// Create results
-	results := dd.NewResultsHash(manager, 1, 0)
+	results := dd.NewResultsHash(manager, uint32(evidence.Count()), 0)
 
 	// Make sure results object is freed after function execution.
 	defer results.Free()
