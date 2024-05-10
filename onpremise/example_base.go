@@ -17,7 +17,6 @@ type ExampleFunc func(params ExampleParams) error
 func RunExample(exampleFunc ExampleFunc) {
 	params := ExampleParams{
 		LicenceKey: os.Getenv("LICENCE_KEY"),
-		Product:    os.Getenv("PRODUCT"),
 		DataFile:   "51Degrees-LiteV4.1.hash",
 	}
 
