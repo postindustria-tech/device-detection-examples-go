@@ -10,6 +10,7 @@ func main() {
 
 	RunExample(
 		func(params ExampleParams) error {
+			//... Example code
 			//Create config
 			config := dd.NewConfigHash(dd.Balanced)
 
