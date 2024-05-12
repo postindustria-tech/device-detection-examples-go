@@ -36,10 +36,10 @@ go test -run Example_performance
 This example will output a report to ./performance_report.log. The report
 content is in the below format:
 ```
-Average 0.00456 ms per User-Agent
-Total User-Agents: 80000
-IsMobile User-Agents: 58076
-Processed User-Agents: 80000
+Average 0.00456 ms per Evidence Record
+Total Evidence Records: 80000
+IsMobile Evidence Records: 58076
+Processed Evidence Records: 80000
 Number of CPUs: 2
 ```
 */
@@ -47,8 +47,9 @@ Number of CPUs: 2
 import ( //	"runtime"
 	"bufio"
 	"fmt"
-	dd_example "github.com/51Degrees/device-detection-examples-go/v4/dd"
+	"io"
 	"log"
+	_ "net/http/pprof"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -57,109 +58,133 @@ import ( //	"runtime"
 	"sync/atomic"
 	"time"
 
+	dd_example "github.com/51Degrees/device-detection-examples-go/v4/dd"
+	"gopkg.in/yaml.v3"
+
 	"github.com/51Degrees/device-detection-go/v4/dd"
 )
 
 // File to output the performance report
 const reportFile = "performance_report.log"
 
-// Number of iterations to perform over the User-Agents.
-// The higher the number is the more accurate the report.
-const iterationCount = 4
-
 // Report struct for each performance run
 type report struct {
-	uaCount        uint64
-	uaIsMobile     uint64
-	uaProcessed    uint64
-	processingTime int64
+	evidenceCount     uint64
+	evidenceIsMobile  uint64
+	evidenceProcessed uint64
+	processingTime    int64
 }
 
-// Perform device detection on a User-Agent
-func matchUserAgent(
+// Perform device detection on a Evidence Record
+func matchEvidenceRecord(
 	wg *sync.WaitGroup,
 	manager *dd.ResourceManager,
-	ua string,
-	calibration bool,
+	evidence *dd.Evidence,
 	rep *report) {
-	// Increase the number of User-Agents being processed
-	atomic.AddUint64(&rep.uaProcessed, 1)
-	if !calibration {
-		// Create results
-		results := dd.NewResultsHash(manager, 1, 0)
+	// Increase the number of Evidence Record being processed
+	atomic.AddUint64(&rep.evidenceProcessed, 1)
 
-		// Make sure results object is freed after function execution.
-		defer results.Free()
+	results := dd.NewResultsHash(manager, uint32(evidence.Count()), 0)
 
-		// fmt.Println(ua)
-		// Perform detection
-		results.MatchUserAgent(ua)
+	// Make sure results object is freed after function execution.
+	defer results.Free()
 
-		// Get the value in string
-		value, err := results.ValuesString(
-			"IsMobile",
-			",")
-		if err != nil {
-			log.Fatalln(err)
-		}
+	// Perform detection
+	err := results.MatchEvidence(evidence)
+	if err != nil {
+		log.Fatal("ERROR: Failed to perform detection.")
+	}
 
-		// Update report
-		if strings.Compare("True", value) == 0 {
-			atomic.AddUint64(&rep.uaIsMobile, 1)
-		}
+	// Get the value in string
+	res, err := results.ValuesString(
+		"IsMobile",
+		",")
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	// Update report
+	if strings.Compare("True", res) == 0 {
+		atomic.AddUint64(&rep.evidenceIsMobile, 1)
 	}
 
 	// Complete and mark as done
 	defer wg.Done()
 }
 
-// Run the performance test. Determine the number of records in a User-Agent
-// file. Iterate through the User-Agent file and perform detection on each
-// User-Agent. Record the processing time and update a report statistic.
+// Run the performance test. Determine the number of records in a Evidence
+// file. Iterate through the Evidence file and perform detection on each
+// Evidence. Record the processing time and update a report statistic.
 func performDetections(
 	manager *dd.ResourceManager,
-	uaFilePath string,
-	calibration bool,
+	options dd_example.Options,
 	rep *report) {
 	// Create a wait group
 	var wg sync.WaitGroup
+	evidenceFilePath := dd_example.GetFilePathByPath(options.EvidenceFilePath)
 
-	rep.uaCount = dd_example.CountUAFromFiles(uaFilePath)
-	rep.uaCount *= iterationCount
-
-	for i := 0; i < iterationCount; i++ {
-		// Loop through the User-Agent file
-		file, err := os.OpenFile(uaFilePath, os.O_RDONLY, 0444)
-		if err != nil {
-			log.Fatalf("ERROR: Failed to open file \"%s\".\n", uaFilePath)
+	// Read and extract Evidence for the performance check
+	evidenceSlice := readYAMLFile(evidenceFilePath)
+	defer func() {
+		// Free up evidence after test completion
+		for _, evidence := range evidenceSlice {
+			evidence.Free()
 		}
-
+	}()
+	start := time.Now()
+	for i := 0; i < int(options.Iterations); i++ {
 		// Actual processing
-		scanner := bufio.NewScanner(file)
-
-		for scanner.Scan() {
+		for _, evidence := range evidenceSlice {
 			// Increase wait group
 			wg.Add(1)
-			go matchUserAgent(
+			rep.evidenceCount += 1
+
+			go matchEvidenceRecord(
 				&wg,
 				manager,
-				scanner.Text(),
-				calibration,
+				evidence,
 				rep)
-		}
-
-		// Make sure there is no scanner error
-		if err := scanner.Err(); err != nil {
-			log.Fatalf("ERROR: Error during scanning file \"%s\".\n", uaFilePath)
-		}
-
-		// Make sure the file is closed properly
-		if err := file.Close(); err != nil {
-			log.Fatalf("ERROR: Failed to close file \"%s\".\n", uaFilePath)
 		}
 	}
 	// Wait until all goroutines finish
 	wg.Wait()
+	rep.processingTime = time.Since(start).Milliseconds()
+}
+
+// Open, read, decode and extract Evidence to be used in the performance test.
+// Data can be reused for multiple iterations.
+func readYAMLFile(evidenceFilePath string) []*dd.Evidence {
+	// Open YAML file
+	file, err := os.OpenFile(evidenceFilePath, os.O_RDONLY, 0444)
+	if err != nil {
+		log.Fatalf("ERROR: Failed to open file \"%s\".\n", evidenceFilePath)
+	}
+	defer func() {
+		// Make sure the file is closed properly
+		if err := file.Close(); err != nil {
+			log.Fatalf("ERROR: Failed to close file \"%s\".\n", evidenceFilePath)
+		}
+	}()
+
+	// Decode YAML file
+	var res []*dd.Evidence
+	dec := yaml.NewDecoder(file)
+	for {
+		// Decode Evidence file by line
+		var doc map[string]string
+		if err := dec.Decode(&doc); err == io.EOF {
+			break
+		} else if err != nil {
+			// Make sure there is no decoder error
+			log.Fatalf("ERROR: Failed during decoding file \"%s\". %v\n", evidenceFilePath, err)
+		}
+		// Prepare evidence for usage
+		filteredEvidence := dd_example.ConvertEvidenceMap(doc)
+		evidence := dd_example.ExtractEvidence(filteredEvidence)
+
+		res = append(res, evidence)
+	}
+	return res
 }
 
 // Check a error returned from writing to a buffer
@@ -170,92 +195,68 @@ func checkWriteError(err error) {
 }
 
 // Print report to a report file and return output message.
-func printReport(caliR *report, actR *report) string {
-	// Get base path
-	basePath, err := os.Getwd()
-	if err != nil {
-		log.Fatalln("Failed to get current directory.")
-	}
-	reportFilePath := basePath + "/" + reportFile
+func printReport(actR *report, logOutputPath string) string {
 	// Get relative output path for testing
-	relReportFilePath, err := filepath.Rel(basePath, reportFilePath)
-	if err != nil {
-		log.Fatalln("Failed to get relative output file path.")
+	var path string
+	if filepath.IsAbs(logOutputPath) {
+		path = logOutputPath
+	} else {
+		rootDir, e := os.Getwd()
+		if e != nil {
+			log.Fatalln("Failed to get current directory.")
+		}
+		path = filepath.Join(rootDir, logOutputPath)
 	}
+	path = filepath.Join(path, reportFile)
 
 	// Create a report file
-	f, err := os.Create(reportFilePath)
+	f, err := os.Create(path)
 	if err != nil {
-		log.Fatalf("ERROR: Failed to create report file \"%s\".", reportFilePath)
+		log.Fatalf("ERROR: Failed to create report file \"%s\".", path)
 	}
 	defer f.Close()
 
 	// Create a writer
 	w := bufio.NewWriter(f)
 
-	// Make sure calibration and actual detections were performed on the same
-	// number of user agents.
-	if actR.uaCount != caliR.uaCount {
-		log.Fatal("ERROR: Calibration and actual detections were not" +
-			"performed on the same number of User-Agents.")
-	}
-
-	// Calculate actual performance
-	avg := float64(actR.processingTime-caliR.processingTime) /
-		float64(actR.uaCount)
-	_, err = fmt.Fprintf(w, "Average %.5f ms per User-Agent\n", avg)
+	msPerRecord := float64(actR.processingTime) / float64(actR.evidenceCount)
+	_, err = fmt.Fprintf(w, "Average %.5f ms per Evidence Record\n", msPerRecord)
 	checkWriteError(err)
-	_, err = fmt.Fprintf(w, "Total User-Agents: %d\n", actR.uaCount)
+	detectionsPerSecond := float64(actR.evidenceCount) / float64(actR.processingTime)
+	_, err = fmt.Fprintf(w, "Average %.2f detections per second\n", detectionsPerSecond)
 	checkWriteError(err)
-	_, err = fmt.Fprintf(w, "IsMobile User-Agents: %d\n", actR.uaIsMobile)
+	_, err = fmt.Fprintf(w, "Total Evidence Records: %d\n", actR.evidenceCount)
 	checkWriteError(err)
-	_, err = fmt.Fprintf(w, "Processed User-Agents: %d\n", actR.uaProcessed)
+	_, err = fmt.Fprintf(w, "IsMobile Evidence Records: %d\n", actR.evidenceIsMobile)
+	checkWriteError(err)
+	_, err = fmt.Fprintf(w, "Processed Evidence Records: %d\n", actR.evidenceProcessed)
 	checkWriteError(err)
 	_, err = fmt.Fprintf(w, "Number of CPUs: %d\n", runtime.NumCPU())
 	checkWriteError(err)
 	w.Flush()
-	return fmt.Sprintf("Output report to file \"%s\".\n", relReportFilePath)
+	return fmt.Sprintf("Output report to file \"%s\".\n", reportFile)
 }
 
-// Run the performance example. Performs two phase: calibration and actual
-// detection. Processing time of each phase is recorded to produce the actual
-// processing time per detection. Return output messages.
+// Run the performance example and return output messages.
 func run(
 	manager *dd.ResourceManager,
-	uaFilePath string) string {
-	// Calibration
-	caliReport := report{0, 0, 0, 0}
-	start := time.Now()
-	performDetections(manager, uaFilePath, true, &caliReport)
-	end := time.Now()
-	caliTime := end.Sub(start)
-	caliReport.processingTime = caliTime.Milliseconds()
-	// Validation to make sure same number of UAs have been read and processed
-	if caliReport.uaCount != caliReport.uaProcessed {
-		log.Fatalln("ERROR: Not all User-Agents have been processed.")
-	}
-
+	options dd_example.Options) string {
 	// Action
 	actReport := report{0, 0, 0, 0}
-	start = time.Now()
-	performDetections(manager, uaFilePath, false, &actReport)
-	end = time.Now()
-	actTime := end.Sub(start)
-	actReport.processingTime = actTime.Milliseconds()
-	// Validation to make sure same number of UAs have been read and processed
-	if actReport.uaCount != actReport.uaProcessed {
-		log.Fatalln("ERROR: Not all User-Agents have been processed.")
+	performDetections(manager, options, &actReport)
+	// Validation to make sure same number of Evidences have been read and processed
+	if actReport.evidenceCount != actReport.evidenceProcessed {
+		log.Fatalln("ERROR: Not all Evidence Records have been processed.")
 	}
 
 	// Print the final performance report
-	return printReport(&caliReport, &actReport)
+	return printReport(&actReport, options.LogOutputPath)
 }
 
 // Setup all configuration settings required for running this example.
 // Run the example.
-func runPerformance(perf dd.PerformanceProfile) string {
-	dataFilePath := dd_example.GetFilePath([]string{dd_example.LiteDataFile})
-	uaFilePath := dd_example.GetFilePath([]string{dd_example.UaFile})
+func runPerformance(perf dd.PerformanceProfile, options dd_example.Options) string {
+	dataFilePath := dd_example.GetFilePathByPath(options.DataFilePath)
 
 	// Create Resource Manager
 	manager := dd.NewResourceManager()
@@ -278,17 +279,18 @@ func runPerformance(perf dd.PerformanceProfile) string {
 	defer manager.Free()
 
 	// Run the performance tests
-	return run(manager, uaFilePath)
+	return run(manager, options)
 }
 
 func main() {
-	dd_example.PerformExample(dd.InMemory, runPerformance)
+	dd_example.PerformExampleOptions(dd.InMemory, runPerformance)
 	// The performance is output to a file 'performance_report.log' with content
 	// similar as below:
-	//   Average 0.01510 ms per User-Agent
-	//   Total User-Agents: 20000
-	//   IsMobile User-Agents: 14527
-	//   Processed User-Agents: 20000
+	//   Average 0.01510 ms per Evidence Record
+	// 	 Average 416.02 detections per second
+	//   Total Evidence Records: 20000
+	//   IsMobile Evidence Records: 14527
+	//   Processed Evidence Records: 20000
 	//   Number of CPUs: 2
 
 	// Output:

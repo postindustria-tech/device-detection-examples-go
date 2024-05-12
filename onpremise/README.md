@@ -6,6 +6,12 @@ This example demonstrates how to use the on-premise engine to detect devices.
 
 ### Running the example
 
+To run the example, execute the following command:
+
+LICENCE_KEY=my_licence_key go run example_file.go
+
+```bash
+
 #### Create config
 ```go
     config := dd.NewConfigHash(dd.Balanced)

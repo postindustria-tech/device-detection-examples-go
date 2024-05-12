@@ -1,4 +1,4 @@
-package main
+package common
 
 import (
 	"github.com/51Degrees/device-detection-go/v4/dd"

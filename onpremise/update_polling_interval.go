@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/51Degrees/device-detection-examples-go/v4/onpremise/common"
 	"github.com/51Degrees/device-detection-go/v4/dd"
 	"github.com/51Degrees/device-detection-go/v4/onpremise"
 	"log"
@@ -8,8 +9,8 @@ import (
 
 func main() {
 
-	RunExample(
-		func(params ExampleParams) error {
+	common.RunExample(
+		func(params common.ExampleParams) error {
 			//... Example code
 			//Create config
 			config := dd.NewConfigHash(dd.Balanced)
@@ -51,7 +52,7 @@ func main() {
 			}
 
 			//Process evidence
-			resultsHash, err := pl.Process(ExampleEvidence)
+			resultsHash, err := pl.Process(common.ExampleEvidence)
 			if err != nil {
 				log.Fatalf("Failed to process: %v", err)
 			}
