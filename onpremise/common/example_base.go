@@ -7,7 +7,7 @@ import (
 )
 
 type ExampleParams struct {
-	LicenceKey string
+	LicenseKey string
 	Product    string
 	DataFile   string
 }
@@ -16,7 +16,7 @@ type ExampleFunc func(params ExampleParams) error
 
 func RunExample(exampleFunc ExampleFunc) {
 	params := ExampleParams{
-		LicenceKey: os.Getenv("LICENCE_KEY"),
+		LicenseKey: os.Getenv("LICENSE_KEY"),
 		DataFile:   "51Degrees-LiteV4.1.hash",
 	}
 

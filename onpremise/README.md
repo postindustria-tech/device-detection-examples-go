@@ -8,7 +8,7 @@ This example demonstrates how to use the on-premise engine to detect devices.
 
 To run the example, execute the following command:
 
-LICENCE_KEY=my_licence_key go run example_file.go
+LICENSE_KEY=my_license_key go run onpremise/example_file.go
 
 ```bash
 
@@ -104,10 +104,10 @@ this option can only be used when using the default data file url from 51Degrees
     WithProduct(product string) EngineOptions
 ```
 
-#### WithLicenceKey sets the licence key to use when pulling the data file
+#### WithLicenceKey sets the license key to use when pulling the data file
 this option can only be used when using the default data file url from 51Degrees, it will be appended as a query parameter
 ```go
-    WithLicenceKey(key string) EngineOptions
+    WithLicenseKey(key string) EngineOptions
 ```
 
 #### WithFileWatch enables or disables file watching

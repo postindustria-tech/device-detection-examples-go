@@ -5,6 +5,7 @@ import (
 	"github.com/51Degrees/device-detection-go/v4/dd"
 	"github.com/51Degrees/device-detection-go/v4/onpremise"
 	"log"
+	"time"
 )
 
 func main() {
@@ -26,7 +27,7 @@ func main() {
 				onpremise.WithDataFile(params.DataFile),
 				// For automatic updates to work you will need to provide a license key.
 				// A license key can be obtained with a subscription from https://51degrees.com/pricing
-				onpremise.WithLicenceKey(params.LicenceKey),
+				onpremise.WithLicenceKey(params.LicenseKey),
 				// Enable automatic updates.
 				onpremise.WithAutoUpdate(true),
 
@@ -75,6 +76,8 @@ func main() {
 
 			//use results and do detection
 			resultsHash.Free()
+
+			<-time.After(1 * time.Minute)
 
 			pl.Stop()
 
