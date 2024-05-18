@@ -18,6 +18,21 @@ or alternatively you can download them from [device-detection-data](https://gith
 - [51Degrees-LiteV4.1.hash](https://github.com/51Degrees/device-detection-data/blob/main/51Degrees-LiteV4.1.hash)
 - [20000 Evidence Records.yml](https://github.com/51Degrees/device-detection-data/blob/main/20000%20Evidence%20Records.yml)
 
+### Software
+
+In order to use device-detection-examples-go the following are required:
+- A C compiler that support C11 or above (Gcc on Linux, Clang on MacOS and MinGW-x64 on Windows)
+- libatomic - which usually come with default Gcc, Clang installation
+
+### Windows
+
+If you are on Windows, make sure that:
+- The path to the `MinGW-x64` `bin` folder is included in the `PATH`. By default, the path should be `C:\msys64\ucrt64\bin`
+- Go environment variable `CGO_ENABLED` is set to `1` 
+```
+go env -w CGO_ENABLED=1
+```
+
 ## Examples
 
 **NOTE**: `device-detection-examples-go` references `device-detection-go` as a dependency in `go.mod`.  No additional actions should be required - the module will be downloaded and built when you do `go run`, `go test`, or `go build` explicitly for any example.  
