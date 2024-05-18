@@ -27,7 +27,7 @@ func main() {
 				onpremise.WithDataFile(params.DataFile),
 				// For automatic updates to work you will need to provide a license key.
 				// A license key can be obtained with a subscription from https://51degrees.com/pricing
-				onpremise.WithLicenceKey(params.LicenseKey),
+				onpremise.WithLicenseKey(params.LicenseKey),
 				// Enable automatic updates.
 				onpremise.WithAutoUpdate(true),
 
@@ -35,13 +35,13 @@ func main() {
 				// check for updates to data files. A recommended
 				// polling interval in a production environment is
 				// around 30 minutes.
-				onpremise.WithPollingInterval(1),
+				onpremise.WithPollingInterval(10),
 				// Set the max amount of time in seconds that should be
 				// added to the polling interval. This is useful in datacenter
 				// applications where multiple instances may be polling for
 				// updates at the same time. A recommended amount in production
 				// environments is 600 seconds.
-				onpremise.WithRandomization(10),
+				onpremise.WithRandomization(1),
 				// Enable update on startup, the auto update system
 				// will be used to check for an update before the
 				// device detection engine is created.
@@ -77,7 +77,7 @@ func main() {
 			//use results and do detection
 			resultsHash.Free()
 
-			<-time.After(1 * time.Minute)
+			<-time.After(30 * time.Second)
 
 			pl.Stop()
 
