@@ -1,15 +1,18 @@
-## onpremise Engine
+# onpremise package examples
 
-This example demonstrates how to use the on-premise engine to detect devices.
+`onpremise` package provides higher-level API for both device detection and automatic data file updates. 
 
+## update_polling_interval
 
-
-### Running the example
+Demonstrates how to set up periodic data file updates by either polling the 51degrees [distributor](https://51degrees.com/documentation/4.4/_info__distributor.html) server or a custom URL. 
 
 To run the example, execute the following command:
 
-LICENSE_KEY=my_license_key go run onpremise/example_file.go
+```bash
+LICENSE_KEY=my_license_key go run onpremise/update_polling_interval.go
+```
 
+# onpremise API Usage
 ```bash
 
 #### Create config

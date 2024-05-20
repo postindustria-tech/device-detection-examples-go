@@ -8,15 +8,28 @@ import (
 	"time"
 )
 
-func processExampleEvidence(engine *onpremise.Engine) {
+func processExampleEvidence(engine *onpremise.Engine, evidence []onpremise.Evidence) {
 	//Process evidence
-	resultsHash, _ := engine.Process(common.ExampleEvidence)
+	resultsHash, _ := engine.Process(evidence)
 	defer resultsHash.Free()
 	//Get values from results
-	browser, _ := resultsHash.ValuesString("BrowserName", ",")
+	vendor, _ := resultsHash.ValuesString("HardwareVendor", ",")
+	name, _ := resultsHash.ValuesString("HardwareName", ",")
+	model, _ := resultsHash.ValuesString("HardwareModel", ",")
 	deviceType, _ := resultsHash.ValuesString("DeviceType", ",")
+	browser, _ := resultsHash.ValuesString("BrowserName", ",")
+	platform, _ := resultsHash.ValuesString("PlatformName", ",")
+	platformVersion, _ := resultsHash.ValuesString("PlatformVersion", ",")
+
+	log.Printf("HardwareVendor: %s", vendor)
+	log.Printf("HardwareName: %s", name)
+	log.Printf("HardwareModel: %s", model)
+	log.Printf("PlatformName: %s", platform)
+	log.Printf("PlatformVersion: %s", platformVersion)
 	log.Printf("BrowserName: %s", browser)
 	log.Printf("DeviceType: %s", deviceType)
+	log.Printf("\n")
+
 }
 
 func main() {
@@ -45,7 +58,7 @@ func main() {
 				// check for updates to data files. A recommended
 				// polling interval in a production environment is
 				// around 30 minutes.
-				onpremise.WithPollingInterval(5),
+				onpremise.WithPollingInterval(3),
 
 				// Set the max amount of time in seconds that should be
 				// added to the polling interval. This is useful in datacenter
@@ -60,10 +73,19 @@ func main() {
 				onpremise.WithUpdateOnStart(false),
 
 				// Optionally provide your own file URL
-				// onpremise.WithDataUpdateUrl(""),
+				// onpremise.WithDataUpdateUrl("<custom URL>"),
 
-				// Whether a temp copy should be created
-				onpremise.WithTempDataCopy(false),
+				// By default a temp copy should be created, unless you are using InMemory performance profile
+				// onpremise.WithTempDataCopy(false),
+
+				// File System Watcher is by default enabled
+				// onpremise.WithFileWatch(false),
+
+				// By default logging is on
+				// onpremise.WithLogging(false),
+
+				// Custom logger implementing LogWriter interface can be passed
+				// onpremise.WithCustomLogger()
 			)
 
 			if err != nil {
@@ -73,14 +95,14 @@ func main() {
 			defer engine.Stop()
 
 			//process before file has been updated
-			processExampleEvidence(engine)
+			processExampleEvidence(engine, common.ExampleEvidence1)
+			processExampleEvidence(engine, common.ExampleEvidence2)
 
 			<-time.After(20 * time.Second)
 
 			//process again after the file has presumably been updated
-			processExampleEvidence(engine)
-			processExampleEvidence(engine)
-			processExampleEvidence(engine)
+			processExampleEvidence(engine, common.ExampleEvidence1)
+			processExampleEvidence(engine, common.ExampleEvidence2)
 
 			return nil
 		},
