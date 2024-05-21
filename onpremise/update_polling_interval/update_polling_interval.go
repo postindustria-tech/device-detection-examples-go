@@ -1,11 +1,12 @@
 package main
 
 import (
+	"log"
+	"time"
+
 	"github.com/51Degrees/device-detection-examples-go/v4/onpremise/common"
 	"github.com/51Degrees/device-detection-go/v4/dd"
 	"github.com/51Degrees/device-detection-go/v4/onpremise"
-	"log"
-	"time"
 )
 
 func processExampleEvidence(engine *onpremise.Engine, evidence []onpremise.Evidence) {
@@ -33,6 +34,7 @@ func processExampleEvidence(engine *onpremise.Engine, evidence []onpremise.Evide
 }
 
 func main() {
+	common.LoadEnvFile()
 
 	common.RunExample(
 		func(params common.ExampleParams) error {
