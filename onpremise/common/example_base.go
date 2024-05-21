@@ -25,10 +25,20 @@ func RunExample(exampleFunc ExampleFunc) {
 		licenseKey = os.Getenv("DEVICE_DETECTION_KEY")
 	}
 
+	dataFile := os.Getenv("DATA_FILE")
+	if dataFile == "" {
+		dataFile = "51Degrees-LiteV4.1.hash"
+	}
+
+	evidenceYaml := os.Getenv("Evidence_YAML")
+	if evidenceYaml == "" {
+		evidenceYaml = "20000 Evidence Records.yml"
+	}
+
 	params := ExampleParams{
 		LicenseKey:   licenseKey,
-		DataFile:     os.Getenv("DATA_FILE"),
-		EvidenceYaml: os.Getenv("EVIDENCE_YAML"),
+		DataFile:     dataFile,
+		EvidenceYaml: evidenceYaml,
 	}
 
 	err := exampleFunc(params)

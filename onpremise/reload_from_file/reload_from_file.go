@@ -179,13 +179,14 @@ func runReloadFromFileSub(
 }
 
 func main() {
-	common.LoadEnvFile()
+	//common.LoadEnvFile()
 
 	common.RunExample(
 		func(params common.ExampleParams) error {
 			//... Example code
 			//Create config
-			config := dd.NewConfigHash(dd.Balanced)
+			config := dd.NewConfigHash(dd.InMemory)
+			//config.SetConcurrency(20)
 
 			//Create on-premise engine
 			pl, err := onpremise.New(
