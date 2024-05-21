@@ -114,7 +114,7 @@ func performDetectionIterations(
 			wg.Add(1)
 
 			// Prepare evidence for usage
-			evidence := common.ConverToEvidence(doc)
+			evidence := common.ConvertToEvidence(doc)
 
 			go executeTest(
 				pl,

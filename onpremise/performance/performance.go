@@ -172,7 +172,7 @@ func readYAMLFile(evidenceFilePath string) [][]onpremise.Evidence {
 			log.Fatalf("ERROR: Failed during decoding file \"%s\". %v\n", evidenceFilePath, err)
 		}
 		// Prepare evidence for usage
-		evidence := common.ConverToEvidence(doc)
+		evidence := common.ConvertToEvidence(doc)
 
 		res = append(res, evidence)
 	}

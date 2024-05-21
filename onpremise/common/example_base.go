@@ -60,7 +60,7 @@ var ExampleEvidence2 = []onpremise.Evidence{
 	{Prefix: dd.HttpHeaderString, Key: "User-Agent", Value: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"},
 }
 
-func ConverToEvidence(values map[string]string) []onpremise.Evidence {
+func ConvertToEvidence(values map[string]string) []onpremise.Evidence {
 	evidence := make([]onpremise.Evidence, len(values))
 	for k, v := range values {
 		strSplit := strings.SplitN(k, ".", 2)
