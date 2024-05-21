@@ -5,6 +5,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"runtime"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -152,8 +153,8 @@ func runReloadFromFileSub(
 		} else {
 			reloads++
 		}
-		// Sleep 3 seconds between reload
-		time.Sleep(3 * time.Second)
+		// Sleep 1.3 seconds between reload
+		time.Sleep(1300 * time.Millisecond)
 	}
 
 	// Wait until all goroutines finish
@@ -186,38 +187,18 @@ func main() {
 			//... Example code
 			//Create config
 			config := dd.NewConfigHash(dd.InMemory)
-			//config.SetConcurrency(20)
+			config.SetConcurrency(uint16(runtime.NumCPU()))
+			config.SetUseUpperPrefixHeaders(false)
+			config.SetUpdateMatchedUserAgent(false)
 
 			//Create on-premise engine
 			pl, err := onpremise.New(
 				config,
-				//Provide your own file URL
-				//it can be compressed as gz or raw, engine will handle it
-				// Passing a custom update URL
 				// Path to your data file
-
 				onpremise.WithDataFile(params.DataFile),
-				// For automatic updates to work you will need to provide a license key.
-				// A license key can be obtained with a subscription from https://51degrees.com/pricing
-				onpremise.WithLicenseKey(params.LicenseKey),
 				// Enable automatic updates.
 				onpremise.WithAutoUpdate(false),
-
-				// Set the frequency in minutes that the pipeline should
-				// check for updates to data files. A recommended
-				// polling interval in a production environment is
-				// around 30 minutes.
-				onpremise.WithPollingInterval(10),
-				// Set the max amount of time in seconds that should be
-				// added to the polling interval. This is useful in datacenter
-				// applications where multiple instances may be polling for
-				// updates at the same time. A recommended amount in production
-				// environments is 600 seconds.
-				onpremise.WithRandomization(10),
-				// Enable update on startup, the auto update system
-				// will be used to check for an update before the
-				// device detection engine is created.
-				onpremise.WithUpdateOnStart(false),
+				// File System Watcher is by default enabled
 				onpremise.WithFileWatch(true),
 			)
 

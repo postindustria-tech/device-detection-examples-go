@@ -30,7 +30,7 @@ func RunExample(exampleFunc ExampleFunc) {
 		dataFile = "51Degrees-LiteV4.1.hash"
 	}
 
-	evidenceYaml := os.Getenv("Evidence_YAML")
+	evidenceYaml := os.Getenv("EVIDENCE_YAML")
 	if evidenceYaml == "" {
 		evidenceYaml = "20000 Evidence Records.yml"
 	}
@@ -96,7 +96,8 @@ func LoadEnvFile(path ...string) {
 
 	file, err := os.Open(openPath)
 	if err != nil {
-		panic(fmt.Sprintf("Error opening file: %v", err))
+		fmt.Printf("Error opening file: %v\n", err)
+		return
 	}
 	defer file.Close()
 
@@ -104,7 +105,8 @@ func LoadEnvFile(path ...string) {
 	decoder := json.NewDecoder(file)
 	err = decoder.Decode(&config)
 	if err != nil {
-		panic(fmt.Sprintf("Error decoding JSON: %v", err))
+		fmt.Printf("Error decoding JSON: %v\n", err)
+		return
 	}
 
 	// Set all defined config variables into the environment
