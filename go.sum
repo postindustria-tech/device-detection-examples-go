@@ -1,11 +1,3 @@
-github.com/51Degrees/device-detection-go/v4 v4.4.24 h1:W00e38W+3UXWju/bATMwHyQ/oQZh1dZ8X9H76Y8NnuM=
-github.com/51Degrees/device-detection-go/v4 v4.4.24/go.mod h1:mtkaY2l1/L37zfyvSndU1opy0rL3+26lB7BBLi6z5LI=
-github.com/51Degrees/device-detection-go/v4 v4.4.29 h1:fTmczsHAGNBQT/d6A1z71amxbKgUwTIWhlevALkUADI=
-github.com/51Degrees/device-detection-go/v4 v4.4.29/go.mod h1:mtkaY2l1/L37zfyvSndU1opy0rL3+26lB7BBLi6z5LI=
-github.com/51Degrees/device-detection-go/v4 v4.4.30 h1:Abrl2Dt7gQF01aQC8eGXdfVbF1xahtJ2EQ0D48FvN6s=
-github.com/51Degrees/device-detection-go/v4 v4.4.30/go.mod h1:mtkaY2l1/L37zfyvSndU1opy0rL3+26lB7BBLi6z5LI=
-github.com/51Degrees/device-detection-go/v4 v4.4.31 h1:vE0HnURJS4yOTkHrEolsILU6PV5kNu/x91R5PHCqxE8=
-github.com/51Degrees/device-detection-go/v4 v4.4.31/go.mod h1:mtkaY2l1/L37zfyvSndU1opy0rL3+26lB7BBLi6z5LI=
 github.com/51Degrees/device-detection-go/v4 v4.4.32 h1:kGLAhxDsLNqQep5RmSP6gWuG7jBxBqIy8UTOwvZdiDo=
 github.com/51Degrees/device-detection-go/v4 v4.4.32/go.mod h1:mtkaY2l1/L37zfyvSndU1opy0rL3+26lB7BBLi6z5LI=
 github.com/fsnotify/fsnotify v1.7.0 h1:8JEhPFa5W2WU7YfeZzPNqzMP6Lwt7L2715Ggo0nosvA=
