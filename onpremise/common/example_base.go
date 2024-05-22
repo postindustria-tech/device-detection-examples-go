@@ -1,15 +1,18 @@
 package common
 
 import (
+	"os"
+	"strings"
+
 	"github.com/51Degrees/device-detection-go/v4/dd"
 	"github.com/51Degrees/device-detection-go/v4/onpremise"
-	"os"
 )
 
 type ExampleParams struct {
-	LicenseKey string
-	Product    string
-	DataFile   string
+	LicenseKey   string
+	Product      string
+	DataFile     string
+	EvidenceYaml string
 }
 
 type ExampleFunc func(params ExampleParams) error
@@ -20,9 +23,20 @@ func RunExample(exampleFunc ExampleFunc) {
 		licenseKey = os.Getenv("DEVICE_DETECTION_KEY")
 	}
 
+	dataFile := os.Getenv("DATA_FILE")
+	if dataFile == "" {
+		dataFile = "51Degrees-LiteV4.1.hash"
+	}
+
+	evidenceYaml := os.Getenv("EVIDENCE_YAML")
+	if evidenceYaml == "" {
+		evidenceYaml = "20000 Evidence Records.yml"
+	}
+
 	params := ExampleParams{
-		LicenseKey: licenseKey,
-		DataFile:   "51Degrees-LiteV4.1.hash",
+		LicenseKey:   licenseKey,
+		DataFile:     dataFile,
+		EvidenceYaml: evidenceYaml,
 	}
 
 	err := exampleFunc(params)
@@ -42,4 +56,26 @@ var ExampleEvidence1 = []onpremise.Evidence{
 
 var ExampleEvidence2 = []onpremise.Evidence{
 	{Prefix: dd.HttpHeaderString, Key: "User-Agent", Value: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"},
+}
+
+func ConvertToEvidence(values map[string]string) []onpremise.Evidence {
+	evidence := make([]onpremise.Evidence, len(values))
+	for k, v := range values {
+		strSplit := strings.SplitN(k, ".", 2)
+		var prefix dd.EvidencePrefix
+		switch strSplit[0] {
+		case "header":
+			prefix = dd.HttpHeaderString
+		case "query":
+			prefix = dd.HttpEvidenceQuery
+		}
+
+		evidence = append(evidence,
+			onpremise.Evidence{
+				Prefix: prefix,
+				Key:    strSplit[1],
+				Value:  v,
+			})
+	}
+	return evidence
 }
