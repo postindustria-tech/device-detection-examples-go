@@ -88,6 +88,9 @@ func main() {
 
 				// Custom logger implementing LogWriter interface can be passed
 				// onpremise.WithCustomLogger()
+
+				// Set properties for checking, default is "" == all
+				//onpremise.WithProperties(""),
 			)
 
 			if err != nil {

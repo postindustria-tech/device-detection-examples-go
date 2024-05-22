@@ -80,14 +80,14 @@ type report struct {
 
 // Perform device detection on a Evidence Record
 func matchEvidenceRecord(
-	pl *onpremise.Engine,
+	engine *onpremise.Engine,
 	wg *sync.WaitGroup,
 	evidence []onpremise.Evidence,
 	rep *report) {
 	// Increase the number of Evidence Record being processed
 	atomic.AddUint64(&rep.evidenceProcessed, 1)
 
-	results, err := pl.Process(evidence)
+	results, err := engine.Process(evidence)
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -114,7 +114,7 @@ func matchEvidenceRecord(
 // file. Iterate through the Evidence file and perform detection on each
 // Evidence. Record the processing time and update a report statistic.
 func performDetections(
-	pl *onpremise.Engine,
+	engine *onpremise.Engine,
 	params common.ExampleParams,
 	rep *report) {
 	// Create a wait group
@@ -133,7 +133,7 @@ func performDetections(
 			rep.evidenceCount += 1
 
 			go matchEvidenceRecord(
-				pl,
+				engine,
 				&wg,
 				evidence,
 				rep)
@@ -230,7 +230,7 @@ func printReport(actR *report, logOutputPath string) {
 }
 
 func main() {
-	common.LoadEnvFile()
+	//common.LoadEnvFile()
 
 	common.RunExample(
 		func(params common.ExampleParams) error {
@@ -244,12 +244,14 @@ func main() {
 			config.SetUpdateMatchedUserAgent(false)
 
 			//Create on-premise engine
-			pl, err := onpremise.New(
+			engine, err := onpremise.New(
 				config,
 				// Path to your data file
 				onpremise.WithDataFile(params.DataFile),
 				// Enable automatic updates.
 				onpremise.WithAutoUpdate(false),
+				// Set properties for checking, default is "" == all
+				onpremise.WithProperties("IsMobile"),
 			)
 
 			if err != nil {
@@ -258,7 +260,7 @@ func main() {
 
 			// Action
 			actReport := report{0, 0, 0, 0}
-			performDetections(pl, params, &actReport)
+			performDetections(engine, params, &actReport)
 			// Validation to make sure same number of Evidences have been read and processed
 			if actReport.evidenceCount != actReport.evidenceProcessed {
 				log.Fatalln("ERROR: Not all Evidence Records have been processed.")
@@ -267,7 +269,7 @@ func main() {
 			// Print the final performance report
 			printReport(&actReport, "")
 
-			pl.Stop()
+			engine.Stop()
 
 			return nil
 		},
