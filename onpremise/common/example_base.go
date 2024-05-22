@@ -1,8 +1,6 @@
 package common
 
 import (
-	"encoding/json"
-	"fmt"
 	"os"
 	"strings"
 
@@ -80,43 +78,4 @@ func ConvertToEvidence(values map[string]string) []onpremise.Evidence {
 			})
 	}
 	return evidence
-}
-
-type Config struct {
-	LicenseKeys  string `json:"licenseKeys"`
-	DataFile     string `json:"dataFile"`
-	EvidenceYaml string `json:"evidenceYaml"`
-}
-
-func LoadEnvFile(path ...string) {
-	openPath := "../env.json"
-	if len(path) > 0 {
-		openPath = path[0]
-	}
-
-	file, err := os.Open(openPath)
-	if err != nil {
-		fmt.Printf("Error opening file: %v\n", err)
-		return
-	}
-	defer file.Close()
-
-	var config Config
-	decoder := json.NewDecoder(file)
-	err = decoder.Decode(&config)
-	if err != nil {
-		fmt.Printf("Error decoding JSON: %v\n", err)
-		return
-	}
-
-	// Set all defined config variables into the environment
-	if _, pres := os.LookupEnv("LICENSE_KEY"); !pres {
-		os.Setenv("LICENSE_KEY", config.LicenseKeys)
-	}
-	if _, pres := os.LookupEnv("DATA_FILE"); !pres {
-		os.Setenv("DATA_FILE", config.DataFile)
-	}
-	if _, pres := os.LookupEnv("EVIDENCE_YAML"); !pres {
-		os.Setenv("EVIDENCE_YAML", config.EvidenceYaml)
-	}
 }

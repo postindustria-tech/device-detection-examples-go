@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/51Degrees/device-detection-examples-go/v4/onpremise/common"
-	"github.com/51Degrees/device-detection-go/v4/dd"
 	"github.com/51Degrees/device-detection-go/v4/onpremise"
 )
 
@@ -34,17 +33,10 @@ func processExampleEvidence(engine *onpremise.Engine, evidence []onpremise.Evide
 }
 
 func main() {
-	common.LoadEnvFile()
-
 	common.RunExample(
 		func(params common.ExampleParams) error {
-			//... Example code
-			//Create config
-			config := dd.NewConfigHash(dd.Balanced)
-
 			//Create on-premise engine
 			engine, err := onpremise.New(
-				config,
 
 				// Path to your data file
 				onpremise.WithDataFile(params.DataFile),

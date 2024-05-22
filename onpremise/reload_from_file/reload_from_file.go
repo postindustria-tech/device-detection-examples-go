@@ -180,8 +180,6 @@ func runReloadFromFileSub(
 }
 
 func main() {
-	//common.LoadEnvFile()
-
 	common.RunExample(
 		func(params common.ExampleParams) error {
 			//... Example code
@@ -193,7 +191,10 @@ func main() {
 
 			//Create on-premise engine
 			pl, err := onpremise.New(
-				config,
+				// Detecting only IsMobile property
+				onpremise.WithProperties([]string{"IsMobile"}),
+				// Optimized config provided
+				onpremise.WithConfigHash(config),
 				// Path to your data file
 				onpremise.WithDataFile(params.DataFile),
 				// Enable automatic updates.

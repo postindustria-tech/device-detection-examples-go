@@ -226,12 +226,10 @@ func printReport(actR *report, logOutputPath string) {
 	_, err = fmt.Fprintf(w, "Number of CPUs: %d\n", runtime.NumCPU())
 	checkWriteError(err)
 	w.Flush()
-	fmt.Printf("Output report to file \"%s\".\n", reportFile)
+	fmt.Printf("Output report to file \"%s\".\n", path)
 }
 
 func main() {
-	common.LoadEnvFile()
-
 	common.RunExample(
 		func(params common.ExampleParams) error {
 			//... Example code
@@ -245,10 +243,13 @@ func main() {
 
 			//Create on-premise engine
 			pl, err := onpremise.New(
-				config,
+				// A single property detection
+				onpremise.WithProperties([]string{"IsMobile"}),
+				// Optimized config provided
+				onpremise.WithConfigHash(config),
 				// Path to your data file
 				onpremise.WithDataFile(params.DataFile),
-				// Enable automatic updates.
+				// Disable automatic updates.
 				onpremise.WithAutoUpdate(false),
 			)
 

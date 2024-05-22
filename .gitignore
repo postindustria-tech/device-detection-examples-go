@@ -3,3 +3,7 @@
 20000 User Agents*
 env.json
 performance_report.log
+.idea
+TAC-HashV41.hash
+prep.sh
+
