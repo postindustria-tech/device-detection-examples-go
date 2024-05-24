@@ -216,3 +216,15 @@ func main() {
 		},
 	)
 }
+
+// The output log of this example is in for the following format:
+//
+// 2021/11/10 11:42:05 Reloaded '2' times.
+// 2021/11/10 11:42:05 Failed to reload '0' times.
+// 2021/11/10 11:42:05 Hashcode '4217895257' for iteration '0'.
+// 2021/11/10 11:42:05 Hashcode '4217895257' for iteration '1'.
+// 2021/11/10 11:42:05 Hashcode '4217895257' for iteration '2'.
+// 2021/11/10 11:42:05 Hashcode '4217895257' for iteration '3'.
+
+// Output:
+// Program execution complete.

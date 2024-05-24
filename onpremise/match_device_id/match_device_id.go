@@ -23,8 +23,8 @@
 package main
 
 /*
- This example illustrates how to perform simple device detections on given
- Evidence.
+ This example illustrates how to perform simple device detections using
+ Device IDs.
 */
 
 import (
@@ -37,9 +37,14 @@ import (
 	"github.com/51Degrees/device-detection-go/v4/onpremise"
 )
 
-// function match performs a match on an input Evidence and determine
-// if the device is a mobile device. Returns output string.
-func match(
+// function match performs a match on an input User-Agent, obtain the device id
+// and perform a second match using the obtained device-id. Then from the
+// returned result of the second match, determin if the device is a mobile
+// device. Returns output string.
+// This function use two ResultsHash inputs so that two matches can be performed
+// independently to guarantee the result of the second match is not impacted by
+// the result of the first match.
+func matchDeviceId(
 	engine *onpremise.Engine,
 	evidence []onpremise.Evidence) string {
 	// Perform detection
@@ -48,10 +53,27 @@ func match(
 	// Make sure results object is freed after function execution.
 	defer results.Free()
 
-	propertyName := "IsMobile"
+	// Obtain DeviceId from results
+	deviceId, err := results.DeviceId()
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	// Obtain raw results object
+	devIdResults := engine.NewResultsHash(1, 0)
+
+	// Make sure results object is freed after function execution.
+	defer devIdResults.Free()
+
+	// Obtain results again, using device Id.
+	err = devIdResults.MatchDeviceId(deviceId)
+	if err != nil {
+		log.Fatalln(err)
+	}
 
 	// If results has values for required property
-	hasValues, err := results.HasValues(propertyName)
+	propertyName := "IsMobile"
+	hasValues, err := devIdResults.HasValues(propertyName)
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -61,30 +83,30 @@ func match(
 		returnStr = fmt.Sprintf("Property %s does not have a matched value.\n", propertyName)
 	} else {
 		// Get the values in string
-		value, err := results.ValuesString(
+		value, err := devIdResults.ValuesString(
 			propertyName,
 			",")
 		if err != nil {
 			log.Fatalln(err)
 		}
+
 		returnStr = fmt.Sprintf("\tIsMobile: %s\n", value)
 	}
-
 	return returnStr
 }
 
-func runGettingStarted(engine *onpremise.Engine) {
+func runMatchDeviceId(engine *onpremise.Engine) {
 	// Perform detection on mobile Evidence
 	actual := fmt.Sprintf("Mobile User-Agent: %s\n", common.GetEvidenceUserAgent(common.ExampleEvidenceMobile))
-	actual += match(engine, common.ExampleEvidenceMobile)
+	actual += matchDeviceId(engine, common.ExampleEvidenceMobile)
 
 	// Perform detection on desktop Evidence
 	actual += fmt.Sprintf("\nDesktop User-Agent: %v\n", common.GetEvidenceUserAgent(common.ExampleEvidenceDesktop))
-	actual += match(engine, common.ExampleEvidenceDesktop)
+	actual += matchDeviceId(engine, common.ExampleEvidenceDesktop)
 
 	// Perform detection on MediaHub Evidence
 	actual += fmt.Sprintf("\nMediaHub User-Agent: %v\n", common.GetEvidenceUserAgent(common.ExampleEvidenceMediaHub))
-	actual += match(engine, common.ExampleEvidenceMediaHub)
+	actual += matchDeviceId(engine, common.ExampleEvidenceMediaHub)
 
 	// Expected output
 	expected := "Mobile User-Agent: Mozilla/5.0 (iPhone; CPU iPhone OS 17_1_2 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.1.2 Mobile/15E148 Safari/604.1\n"
@@ -103,7 +125,6 @@ func runGettingStarted(engine *onpremise.Engine) {
 		log.Println(actual)
 		log.Fatalln("Output does not match expected.")
 	}
-
 	log.Println(actual)
 }
 
@@ -129,7 +150,7 @@ func main() {
 			}
 
 			// Run example
-			runGettingStarted(engine)
+			runMatchDeviceId(engine)
 
 			engine.Stop()
 

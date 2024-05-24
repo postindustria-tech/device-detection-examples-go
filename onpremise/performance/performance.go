@@ -274,3 +274,15 @@ func main() {
 		},
 	)
 }
+
+// The performance is output to a file 'performance_report.log' with content
+// similar as below:
+//   Average 0.01510 ms per Evidence Record
+// 	 Average 416.02 detections per second
+//   Total Evidence Records: 20000
+//   IsMobile Evidence Records: 14527
+//   Processed Evidence Records: 20000
+//   Number of CPUs: 2
+
+// Output:
+// Output report to file "performance_report.log".

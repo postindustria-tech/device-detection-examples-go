@@ -83,3 +83,12 @@ func ConvertToEvidence(values map[string]string) []onpremise.Evidence {
 	}
 	return evidence
 }
+
+func GetEvidenceUserAgent(evidence []onpremise.Evidence) string {
+	for i := range evidence {
+		if evidence[i].Key == "User-Agent" {
+			return evidence[i].Value
+		}
+	}
+	return ""
+}
